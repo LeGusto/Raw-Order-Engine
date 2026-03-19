@@ -7,6 +7,7 @@
 #include <print>
 #include <cstddef>
 #include <arpa/inet.h>
+#include <vector>
 
 class Server
 {
@@ -17,8 +18,9 @@ public:
         addrinfo hints;
 
         memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_INET;
+        hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
+        // hints.ai_flags = AI_PASSIVE;
 
         int status = getaddrinfo(name, "80", &hints, &servinfo);
 
@@ -63,13 +65,44 @@ public:
         else if (servinfo->ai_socktype == SOCK_DGRAM)
             socket_type = "UDP";
 
-        std::print("Address: {}\n Port: {}\n Family: {}\n\n Socket type: {}", addr, port, family, socket_type);
+        std::print("Address: {}\n Port: {}\n Family: {}\n Socket type: {} \n\n", addr, port, family, socket_type);
+    }
+
+    static void print_all_ips(addrinfo *servinfo)
+    {
+        char res[INET6_ADDRSTRLEN];
+
+        std::vector<std::string> ips;
+
+        for (addrinfo *ai = servinfo; ai != NULL; ai = ai->ai_next)
+        {
+            if (ai->ai_family == AF_INET)
+            {
+                sockaddr_in *ipv4 = reinterpret_cast<sockaddr_in *>(ai->ai_addr);
+                inet_ntop(AF_INET, &ipv4->sin_addr, &res[0], INET_ADDRSTRLEN);
+                ips.push_back(res);
+            }
+            else if (ai->ai_family == AF_INET6)
+            {
+                sockaddr_in6 *ipv6 = reinterpret_cast<sockaddr_in6 *>(ai->ai_addr);
+                inet_ntop(AF_INET6, &ipv6->sin6_addr, &res[0], INET6_ADDRSTRLEN);
+                ips.push_back(res);
+            }
+        }
+
+        std::cout << "All adresses: \n";
+
+        for (auto &v : ips)
+        {
+            std::cout << v << "\n";
+        }
     }
 };
 
 int main()
 {
-    addrinfo *servinfo = Server::read_TCP_v4("googasdfafsdfasfasfasle.com");
+    addrinfo *servinfo = Server::read_TCP_v4("google.com");
     Server::print_addrinfo(servinfo);
+    Server::print_all_ips(servinfo);
     freeaddrinfo(servinfo);
 }
