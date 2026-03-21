@@ -31,6 +31,25 @@ public:
         read_TCP_v4();
     }
 
+    void log(std::string msg)
+    {
+        if constexpr (DEBUG)
+        {
+            std::cout << "[server] " << msg;
+        }
+    }
+
+    void print_listen_sockaddr()
+    {
+        char host[200];
+        char port[200];
+
+        getnameinfo((sockaddr *)&listen_sockaddr, listen_sockaddr_addrlen, host, sizeof(host), port, sizeof(port), 0);
+
+        std::cout << "Connected to host: " << host << "\n";
+        std::cout << "Connected to port: " << port << "\n";
+    }
+
     void read_TCP_v4()
     {
         addrinfo hints;
@@ -88,7 +107,7 @@ public:
         else if (servinfo->ai_socktype == SOCK_DGRAM)
             socket_type = "UDP";
 
-        std::print("Address: {}\n Port: {}\n Family: {}\n Socket type: {} \n\n", addr, port, family, socket_type);
+        std::print("[server] Address: {}\nPort: {}\nFamily: {}\nSocket type: {} \n\n", addr, port, family, socket_type);
     }
 
     void print_all_ips()
@@ -118,12 +137,14 @@ public:
             }
         }
 
-        std::cout << "All adresses: \n";
+        std::cout << "[server] All adresses: \n";
 
         for (auto &v : ips)
         {
             std::cout << v << "\n";
         }
+
+        std::cout << "\n";
     }
 
     void get_socket()
@@ -135,6 +156,9 @@ public:
 
         sock_desc = -1;
 
+        log("Creating socket...\n");
+        print_addrinfo();
+
         while ((sock_desc = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol)) == -1)
         {
             if (servinfo->ai_next == nullptr)
@@ -143,38 +167,63 @@ public:
             }
 
             servinfo = servinfo->ai_next;
+            log("Failed to get socket, trying different address\n");
         }
 
         setsockopt(sock_desc, SOL_SOCKET, SO_REUSEPORT, &reuse_port, sizeof(reuse_port));
+        log("Socket created\n");
+        // setsockopt(sock_desc, SOL_SOCKET, SO_SNDBUF, &SND_SIZE, sizeof(SND_SIZE));
     }
 
     void bind_socket()
     {
+        log("Binding socket...\n");
         if (bind(sock_desc, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
         {
             throw std::runtime_error(strerror(errno));
         }
+        log("Socket bound\n");
     }
 
     void listen_socket()
     {
+        log("Initiating listen...\n");
         if (listen(sock_desc, BACKLOG) == -1)
         {
             throw std::runtime_error(strerror(errno));
         }
+        log("Server listening...\n");
     }
 
     void accept_socket()
     {
+        log("Waiting for connection...\n");
         if ((listen_sock_desc = accept(sock_desc, reinterpret_cast<sockaddr *>(&listen_sockaddr), &listen_sockaddr_addrlen)) == -1)
         {
-            std::runtime_error(strerror(errno));
+            throw std::runtime_error(strerror(errno));
         }
+        log("Accepted connection:\n");
+        print_listen_sockaddr();
     }
 
     void send_msg(const char *msg)
     {
-        int bytes_sent = send(listen_sock_desc, msg, strlen(msg), 0);
+        size_t bytes_needed = strlen(msg);
+        size_t bytes_sent = 0;
+
+        log("Sending message...\n");
+        while (bytes_needed > 0)
+        {
+            std::cout << "[server] Bytes left: " << bytes_needed << "\n";
+            if ((bytes_sent = send(listen_sock_desc, msg, bytes_needed, 0)) == -1)
+            {
+                throw std::runtime_error(strerror(errno));
+            }
+            bytes_needed -= bytes_sent;
+            msg += bytes_sent;
+        }
+
+        log("Message delivered\n");
     }
 
     ~Server()
@@ -192,12 +241,15 @@ public:
 
 int main()
 {
-    Server server{}; // anything below 1024 is reserved, valid up to 65535
-    server.print_addrinfo();
-    server.print_all_ips();
+    Server server{};
     server.get_socket();
     server.bind_socket();
     server.listen_socket();
     server.accept_socket();
-    server.send_msg("Hello");
+    std::string msg = "hello";
+    for (int i = 0; i < 29; i++)
+    {
+        msg += msg;
+    }
+    server.send_msg(&msg[0]);
 }

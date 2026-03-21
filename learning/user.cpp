@@ -39,10 +39,18 @@ int main()
     }
 
     char buf[20]{};
+    buf[19] = '\0';
 
-    recv(socket_desc, &buf, sizeof(buf), 0);
+    int bytes_received = 0;
+    while ((bytes_received = recv(socket_desc, &buf, sizeof(buf) - 1, 0)) != 0)
+    {
+        if (bytes_received == -1)
+        {
+            throw std::runtime_error(strerror(errno));
+        }
 
-    std::cout << buf << "\n";
+        // std::cout << buf;
+    };
 
     freeaddrinfo(servinfo);
     close(socket_desc);
