@@ -80,7 +80,17 @@ void test_getaddrinfo()
     }
 }
 
+void testing()
+{
+    const char msg[] = {'c', 'a', 'n', '\0'};
+    const char msg2[] = {};
+    std::cout << sizeof(&msg) << std::endl;
+    std::cout << sizeof(&msg2) << std::endl;
+    ;
+}
+
 int main()
 {
-    test_getaddrinfo();
+    // test_getaddrinfo();
+    testing();
 }

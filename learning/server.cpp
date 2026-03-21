@@ -9,39 +9,45 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <vector>
+#include "config.h"
 
 class Server
 {
 private:
     addrinfo *servinfo = nullptr;
+    addrinfo *servinfo_head = nullptr; // for freeing linked list
     int sock_desc = -1;
+    int reuse_port = 1; // skip TIME_WAIT for closed ports, doesn't wait for leftover packets
+    int listen_sock_desc = -1;
+    socklen_t listen_sockaddr_addrlen = sizeof(sockaddr_storage);
+    sockaddr_storage listen_sockaddr; // sockaddr type agnostic storage
 
 public:
     Server(const Server &) = delete;            // no copy Server(s)
     Server &operator=(const Server &) = delete; // no copy Server b = s
 
-    Server(const char name[])
+    Server()
     {
-        read_TCP_v4(name);
+        read_TCP_v4();
     }
 
-    addrinfo *read_TCP_v4(const char name[])
+    void read_TCP_v4()
     {
         addrinfo hints;
 
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
-        // hints.ai_flags = AI_PASSIVE;
+        hints.ai_flags = AI_PASSIVE; // fill in with own IP
 
-        int status = getaddrinfo(name, "80", &hints, &servinfo);
+        int status = getaddrinfo(NULL, PORT, &hints, &servinfo);
 
         if (status != 0)
         {
             throw std::runtime_error(gai_strerror(status));
         }
 
-        return servinfo;
+        servinfo_head = servinfo;
     }
 
     void print_addrinfo()
@@ -128,24 +134,54 @@ public:
         }
 
         sock_desc = -1;
-        addrinfo *servinfo_copy = servinfo;
 
-        while ((sock_desc = socket(servinfo_copy->ai_family, servinfo_copy->ai_socktype, servinfo_copy->ai_protocol)) == -1)
+        while ((sock_desc = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol)) == -1)
         {
-            if (servinfo_copy->ai_next == nullptr)
+            if (servinfo->ai_next == nullptr)
             {
                 throw std::runtime_error("All address nodes invalid");
             }
 
-            servinfo_copy = servinfo_copy->ai_next;
+            servinfo = servinfo->ai_next;
         }
+
+        setsockopt(sock_desc, SOL_SOCKET, SO_REUSEPORT, &reuse_port, sizeof(reuse_port));
+    }
+
+    void bind_socket()
+    {
+        if (bind(sock_desc, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
+        {
+            throw std::runtime_error(strerror(errno));
+        }
+    }
+
+    void listen_socket()
+    {
+        if (listen(sock_desc, BACKLOG) == -1)
+        {
+            throw std::runtime_error(strerror(errno));
+        }
+    }
+
+    void accept_socket()
+    {
+        if ((listen_sock_desc = accept(sock_desc, reinterpret_cast<sockaddr *>(&listen_sockaddr), &listen_sockaddr_addrlen)) == -1)
+        {
+            std::runtime_error(strerror(errno));
+        }
+    }
+
+    void send_msg(const char *msg)
+    {
+        int bytes_sent = send(listen_sock_desc, msg, strlen(msg), 0);
     }
 
     ~Server()
     {
         if (servinfo != nullptr)
         {
-            freeaddrinfo(servinfo);
+            freeaddrinfo(servinfo_head);
         }
         if (sock_desc != -1)
         {
@@ -156,8 +192,12 @@ public:
 
 int main()
 {
-    Server server{"google.com"};
+    Server server{}; // anything below 1024 is reserved, valid up to 65535
     server.print_addrinfo();
     server.print_all_ips();
     server.get_socket();
+    server.bind_socket();
+    server.listen_socket();
+    server.accept_socket();
+    server.send_msg("Hello");
 }
