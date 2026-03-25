@@ -1,5 +1,5 @@
-build_server: learning/server.cpp
-	g++ -std=c++23 -I. -o bin/server learning/server.cpp
+build_server: learning/server_main.cpp learning/server_tcp.h learning/server_udp.h
+	g++ -std=c++23 -I. -o bin/server learning/server_main.cpp
 
 build_user: learning/user.cpp
 	g++ -std=c++23 -I. -o bin/user learning/user.cpp

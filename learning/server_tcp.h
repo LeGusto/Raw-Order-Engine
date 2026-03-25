@@ -2,29 +2,8 @@
 
 class ServerTCP : public Server
 {
-    void send_msg(const char *msg) override
-    {
-        size_t bytes_needed = strlen(msg);
-        size_t bytes_sent = 0;
 
-        while (bytes_needed > 0)
-        {
-            std::cout << "[server] Bytes left: " << bytes_needed << "\n";
-            if ((bytes_sent = send(listen_sock_desc, msg, bytes_needed, 0)) == -1)
-            {
-                throw std::runtime_error(strerror(errno));
-            }
-            bytes_needed -= bytes_sent;
-            msg += bytes_sent;
-        }
-    }
-
-    void get_connection() override
-    {
-        listen_socket();
-        accept_socket();
-    }
-
+private:
     void listen_socket()
     {
         log("Initiating listen...\n");
@@ -45,5 +24,29 @@ class ServerTCP : public Server
         }
         log("Accepted connection:\n");
         print_listen_sockaddr();
+    }
+
+public:
+    void send_msg(const char *msg) override
+    {
+        ssize_t bytes_needed = strlen(msg);
+        ssize_t bytes_sent = 0;
+
+        while (bytes_needed > 0)
+        {
+            std::cout << "[server] Bytes left: " << bytes_needed << "\n";
+            if ((bytes_sent = send(listen_sock_desc, msg, bytes_needed, 0)) == -1)
+            {
+                throw std::runtime_error(strerror(errno));
+            }
+            bytes_needed -= bytes_sent;
+            msg += bytes_sent;
+        }
+    }
+
+    void get_connection() override
+    {
+        listen_socket();
+        accept_socket();
     }
 };

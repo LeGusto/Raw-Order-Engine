@@ -24,8 +24,6 @@ protected:
     int listen_sock_desc = -1;
     socklen_t listen_sockaddr_addrlen = sizeof(sockaddr_storage);
     sockaddr_storage listen_sockaddr; // sockaddr type agnostic storage
-public:
-    Server() = default;
 
     void setup_addrinfo()
     {
@@ -53,6 +51,57 @@ public:
             std::cout << "[server] " << msg;
         }
     }
+
+private:
+    void get_socket()
+    {
+        if (servinfo == nullptr)
+        {
+            throw std::runtime_error("No address info available");
+        }
+
+        sock_desc = -1;
+
+        log("Creating socket...\n");
+        print_addrinfo();
+
+        while ((sock_desc = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol)) == -1)
+        {
+            if (servinfo->ai_next == nullptr)
+            {
+                throw std::runtime_error("All address nodes invalid");
+            }
+
+            servinfo = servinfo->ai_next;
+            log("Failed to get socket, trying different address\n");
+        }
+
+        setsockopt(sock_desc, SOL_SOCKET, SO_REUSEPORT, &reuse_port, sizeof(reuse_port));
+        if (!BLOCKING)
+        {
+            fcntl(sock_desc, F_SETFL, O_NONBLOCK);
+        }
+        log("Socket created\n");
+        // setsockopt(sock_desc, SOL_SOCKET, SO_SNDBUF, &SND_SIZE, sizeof(SND_SIZE));
+    }
+
+    void bind_socket()
+    {
+        log("Binding socket...\n");
+        if (bind(sock_desc, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
+        {
+            throw std::runtime_error(strerror(errno));
+        }
+        log("Socket bound\n");
+    }
+
+public:
+    Server()
+    {
+        setup_addrinfo();
+        get_socket();
+        bind_socket();
+    };
 
     void print_listen_sockaddr()
     {
@@ -106,49 +155,23 @@ public:
         std::print("[server] Address: {}\nPort: {}\nFamily: {}\nSocket type: {} \n\n", addr, port, family, socket_type);
     }
 
-    void get_socket()
-    {
-        if (servinfo == nullptr)
-        {
-            throw std::runtime_error("No address info available");
-        }
-
-        sock_desc = -1;
-
-        log("Creating socket...\n");
-        print_addrinfo();
-
-        while ((sock_desc = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol)) == -1)
-        {
-            if (servinfo->ai_next == nullptr)
-            {
-                throw std::runtime_error("All address nodes invalid");
-            }
-
-            servinfo = servinfo->ai_next;
-            log("Failed to get socket, trying different address\n");
-        }
-
-        setsockopt(sock_desc, SOL_SOCKET, SO_REUSEPORT, &reuse_port, sizeof(reuse_port));
-        if (!BLOCKING)
-        {
-            fcntl(sock_desc, F_SETFL, O_NONBLOCK);
-        }
-        log("Socket created\n");
-        // setsockopt(sock_desc, SOL_SOCKET, SO_SNDBUF, &SND_SIZE, sizeof(SND_SIZE));
-    }
-
-    void bind_socket()
-    {
-        log("Binding socket...\n");
-        if (bind(sock_desc, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
-        {
-            throw std::runtime_error(strerror(errno));
-        }
-        log("Socket bound\n");
-    }
-
     virtual void send_msg(const char *msg) = 0;
 
     virtual void get_connection() = 0;
+
+    virtual ~Server()
+    {
+        if (servinfo != nullptr)
+        {
+            freeaddrinfo(servinfo_head);
+        }
+        if (sock_desc != -1)
+        {
+            close(sock_desc);
+        }
+        if (listen_sock_desc != -1)
+        {
+            close(listen_sock_desc);
+        }
+    }
 };
