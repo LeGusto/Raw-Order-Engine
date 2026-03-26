@@ -14,7 +14,13 @@ int main()
     {
         server = std::make_unique<ServerUDP>();
     }
+    else
+    {
+        throw std::runtime_error("Unknown socket type");
+    }
     server->get_connection();
-    const char *buf = "Hello";
-    server->send_msg(buf);
+    server->use_poll();
+    // server->get_connection();
+    // const char *buf = "Hello";
+    // server->send_msg(buf);
 }

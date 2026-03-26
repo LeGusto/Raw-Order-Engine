@@ -3,7 +3,7 @@
 class ServerUDP : public Server
 {
 public:
-    void send_msg(const char *msg) override
+    void send_msg(const char *msg, int fd) override
     {
         size_t bytes_needed = strlen(msg);
         ssize_t bytes_sent = 0;
@@ -35,4 +35,6 @@ public:
             throw std::runtime_error(strerror(errno));
         }
     }
+
+    void use_poll() override {}
 };

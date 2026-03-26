@@ -13,6 +13,7 @@
 #include <vector>
 #include <fcntl.h>
 #include "config.h"
+#include <poll.h>
 
 class Server
 {
@@ -24,6 +25,7 @@ protected:
     int listen_sock_desc = -1;
     socklen_t listen_sockaddr_addrlen = sizeof(sockaddr_storage);
     sockaddr_storage listen_sockaddr; // sockaddr type agnostic storage
+    std::vector<pollfd> pfds;
 
     void setup_addrinfo()
     {
@@ -155,9 +157,11 @@ public:
         std::print("[server] Address: {}\nPort: {}\nFamily: {}\nSocket type: {} \n\n", addr, port, family, socket_type);
     }
 
-    virtual void send_msg(const char *msg) = 0;
+    virtual void send_msg(const char *msg, int fd) = 0;
 
     virtual void get_connection() = 0;
+
+    virtual void use_poll() = 0;
 
     virtual ~Server()
     {

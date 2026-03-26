@@ -44,15 +44,26 @@ void get_tcp()
     memset(buf, 0, sizeof(buf));
     buf[19] = '\0';
 
+    send(socket_desc, buf, 1, 0);
+
+    int bytes_needed = 0;
+    recv(socket_desc, &bytes_needed, sizeof(bytes_needed), 0);
+    bytes_needed = ntohl(bytes_needed);
+
     int bytes_received = 0;
-    while ((bytes_received = recv(socket_desc, &buf, sizeof(buf) - 1, 0)) != 0)
+    while (bytes_needed > 0)
     {
+        bytes_received = recv(socket_desc, &buf, sizeof(buf) - 1, 0);
         if (bytes_received == -1)
         {
             throw std::runtime_error(strerror(errno));
         }
-        std::cout << buf;
+
+        bytes_needed -= bytes_received;
+
+        std::cout << bytes_needed << " " << buf << "\n";
     };
+    std::cout << "Done\n";
 }
 
 int main()
