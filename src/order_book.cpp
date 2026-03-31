@@ -34,9 +34,9 @@ std::vector<Match> OrderBook::match_orders()
             if (ptr_a->begin()->quantity == qty)
             {
                 this->orderIDMap.erase(ptr_a->begin()->id);
+                ptr_a->pop_front();
                 if (ptr_a->empty())
                     askMap.erase(askMap.begin());
-                ptr_a->pop_front();
             }
             else
             {
