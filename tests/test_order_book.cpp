@@ -8,14 +8,16 @@ int main()
     assert(!book.highest_bid().has_value());
     assert(!book.lowest_ask().has_value());
 
-    book.process_order(SIDE::ASK, 10, 100, 1);
+    std::variant<std::vector<Match>, Order> rt = book.process_order(SIDE::ASK, 10, 100, 1);
     assert(book.lowest_ask().has_value());
     assert(book.lowest_ask()->price == 100);
+    assert(holds_alternative<Order>(rt));
 
-    book.process_order(SIDE::BID, 1, 100, 1);
+    rt = book.process_order(SIDE::BID, 1, 100, 1);
 
     assert(book.lowest_ask()->quantity == 9);
     assert(!book.highest_bid().has_value());
+    assert(holds_alternative<std::vector<Match>>(rt));
 
     book.process_order(SIDE::BID, 10, 150, 1);
     assert(!book.lowest_ask().has_value());

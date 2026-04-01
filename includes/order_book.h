@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 #include <optional>
+#include <variant>
 
 enum class SIDE
 {
@@ -39,7 +40,11 @@ public:
 
 struct mapNavigation
 {
-    std::list<int>::iterator it;
+    std::list<Order>::iterator it;
+    SIDE side;
+    uint32_t price;
+
+    mapNavigation(std::list<Order>::iterator _it, Order &order) : it(_it), side(order.side), price(order.price) {};
 };
 
 class OrderBook
@@ -56,7 +61,7 @@ public:
     std::optional<Order> highest_bid();
     std::optional<Order> lowest_ask();
 
-    std::vector<Match> process_order(SIDE side, uint32_t quantity, uint32_t price, uint32_t customerID);
+    std::variant<std::vector<Match>, Order> process_order(SIDE side, uint32_t quantity, uint32_t price, uint32_t customerID);
     std::optional<Order> cancel_order(uint32_t orderID);
 
     std::vector<Order> get_orders(uint32_t customerID);
