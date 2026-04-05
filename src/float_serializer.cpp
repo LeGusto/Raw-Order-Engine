@@ -86,3 +86,51 @@ uint64_t ntohll(uint64_t val)
         return std::byteswap(val);
     return val;
 }
+
+template <typename T>
+concept Serializable = requires(T t) {
+    { t.fields() };
+};
+
+template <typename T>
+void pack(std::string &buf, const T &val)
+{
+    if constexpr (std::is_floating_point_v<T>)
+    {
+        if constexpr (std::is_same_v<T, float>)
+        {
+            uint64_t packed = pack754(val, 32, 8);
+        }
+        else if constexpr (std::is_same_v<T, double>)
+        {
+            uint64_t packed = pack754(val, 64, 11);
+        }
+    }
+    else if constexpr (tsd::is_integral_v<T>)
+    {
+        if constexpr (sizeof(T) == 8)
+        {
+            int8_t new_val = val // just a single byte, no order
+        }
+        else if constexpr (sizeof(T) == 16)
+        {
+            int16_t new_val = htons(val);
+        }
+        else if constexpr (sizeof(T) == 32)
+        {
+            int32_t new_val = htonl(val);
+        }
+        else if constexpr (sizeof(T) == 64)
+        {
+            int64_t new_val = htonll(val);
+        }
+    }
+    else if constexpr (Serializable<T>)
+    {
+        ; //
+    }
+    else
+    {
+        throw std::runtime_error("Unsupported type, cannot pack");
+    }
+}
