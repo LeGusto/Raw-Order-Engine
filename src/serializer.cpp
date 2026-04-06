@@ -100,29 +100,35 @@ void pack(std::string &buf, const T &val)
         if constexpr (std::is_same_v<T, float>)
         {
             uint64_t packed = pack754(val, 32, 8);
+            buf.push_back(htonll(packed));
         }
         else if constexpr (std::is_same_v<T, double>)
         {
             uint64_t packed = pack754(val, 64, 11);
+            buf.push_back(htonll(packed));
         }
     }
     else if constexpr (tsd::is_integral_v<T>)
     {
         if constexpr (sizeof(T) == 8)
         {
-            int8_t new_val = val // just a single byte, no order
+            int8_t new_val = val; // just a single byte, no order
+            buf.push_back(val);
         }
         else if constexpr (sizeof(T) == 16)
         {
             int16_t new_val = htons(val);
+            buf.push_back(htons(new_val));
         }
         else if constexpr (sizeof(T) == 32)
         {
             int32_t new_val = htonl(val);
+            buf.push_back(htonl(new_val));
         }
         else if constexpr (sizeof(T) == 64)
         {
             int64_t new_val = htonll(val);
+            buf.push_back(htonll(new_val));
         }
     }
     else if constexpr (Serializable<T>)
