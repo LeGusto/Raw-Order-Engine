@@ -7,6 +7,16 @@
 #include <optional>
 #include <variant>
 
+enum class MessageType : uint8_t
+{
+    SUBMIT_ORDER = 0x01,
+    CANCEL_ORDER = 0x02,
+    ORDER_ACK = 0x03,
+    CANCEL_ACK = 0x04,
+    MATCH = 0x05,
+    REJECT = 0x06,
+};
+
 enum class SIDE
 {
     ASK,
