@@ -36,6 +36,11 @@ public:
     SIDE side;
 
     Order(SIDE _side, uint32_t _quantity, uint32_t _price, uint32_t _customerID) : side(_side), quantity(_quantity), price(_price), customerID(_customerID), id(orderID++) {};
+
+    auto fields()
+    {
+        return std::tie(id, quantity, price, customerID, side); // generate tuple<uint32_t&,...>
+    }
 };
 
 struct Match
