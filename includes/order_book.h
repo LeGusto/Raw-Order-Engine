@@ -41,6 +41,11 @@ public:
     {
         return std::tie(id, quantity, price, customerID, side); // generate tuple<uint32_t&,...>
     }
+
+    auto fields()
+    {
+        return std::tie(id, quantity, price, customerID, side); // generate tuple<uint32_t&,...>
+    }
 };
 
 struct Match
@@ -49,6 +54,11 @@ public:
     Order askID;
     Order bidID;
     uint32_t quantity = 0;
+
+    auto fields() const
+    {
+        return std::tie(askID, bidID, quantity); // generate tuple<uint32_t&,...>
+    }
 
     Match(Order _askID, Order _bidID, uint32_t _quantity) : askID(_askID), bidID(_bidID), quantity(_quantity) {};
 };

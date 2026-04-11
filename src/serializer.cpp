@@ -5,6 +5,7 @@
 #include <iostream>
 #include <bit>
 #include <arpa/inet.h>
+#include <cstring>
 
 uint64_t pack754(long double f, uint32_t bits, uint32_t exp_bits)
 {
@@ -46,6 +47,8 @@ uint64_t pack754(long double f, uint32_t bits, uint32_t exp_bits)
 
 long double unpack754(uint64_t encoded_f, uint32_t bits, uint32_t exp_bits)
 {
+    if (encoded_f == 0)
+        return 0;
     // std::cout << encoded_f << "\n";
     uint64_t bias = (1 << (exp_bits - 1)) - 1;
     uint64_t significand_bits = bits - exp_bits - 1;
@@ -103,12 +106,12 @@ void pack(std::string &buf, const T &val)
         if constexpr (std::is_same_v<T, float>)
         {
             uint64_t packed = htonll(pack754(val, 32, 8));
-            buf.push_back(packed);
+            buf.append(reinterpret_cast<const char *>(&packed), 8);
         }
         else if constexpr (std::is_same_v<T, double>)
         {
             uint64_t packed = htonll(pack754(val, 64, 11));
-            buf.push_back(packed);
+            buf.append(reinterpret_cast<const char *>(&packed), 8);
         }
     }
     else if constexpr (std::is_enum_v<T>)
@@ -146,5 +149,60 @@ void pack(std::string &buf, const T &val)
     else
     {
         throw std::runtime_error("Unsupported type, cannot pack");
+    }
+}
+
+template <typename T>
+void unpack(const std::string &buf, size_t &offset, T &field)
+{
+    if constexpr (std::is_integral_v<T>)
+    {
+        std::memcpy(&field, buf.data() + offset, sizeof(T));
+        offset += sizeof(T);
+
+        if constexpr (sizeof(T) == 2)
+        {
+            field = ntohs(field);
+        }
+        else if constexpr (sizeof(T) == 4)
+        {
+            field = ntohl(field);
+        }
+        else if constexpr (sizeof(T) == 8)
+        {
+            field = ntohll(field);
+        }
+    }
+    else if constexpr (std::is_enum_v<T>)
+    {
+        std::underlying_type_t<T> tmp;
+        unpack(buf, offset, tmp);
+        field = static_cast<T>(tmp);
+    }
+    else if constexpr (std::is_floating_point_v<T>)
+    {
+        if constexpr (std::is_same_v<float, T>)
+        {
+            uint64_t tmp;
+            std::memcpy(&tmp, buf.data() + offset, sizeof(T));
+            offset += sizeof(T);
+
+            tmp = ntohll(tmp);
+            field = unpack754(tmp, 32, 8);
+        }
+        else if constexpr (std::is_same_v<double, T>)
+        {
+            uint64_t tmp;
+            std::memcpy(&tmp, buf.data() + offset, sizeof(T));
+            offset += sizeof(T);
+
+            tmp = ntohll(tmp);
+            field = unpack754(tmp, 64, 11);
+        }
+    }
+    else if constexpr (Serializable<T>)
+    {
+        std::apply([&](auto &...f)
+                   { (unpack(buf, offset, f), ...); }, field.fields());
     }
 }
