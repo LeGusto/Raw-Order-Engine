@@ -60,11 +60,11 @@ std::vector<Match> OrderBook::match_orders()
     return res;
 }
 
-std::variant<std::vector<Match>, Order> OrderBook::process_order(SIDE side, uint32_t quantity, uint32_t price, uint32_t customerID)
+std::variant<std::vector<Match>, Order> OrderBook::process_order(Side side, uint32_t quantity, uint32_t price, uint32_t customerID)
 {
     Order order{side, quantity, price, customerID};
     std::list<Order>::iterator order_it;
-    if (side == SIDE::ASK)
+    if (side == Side::ASK)
     {
         if (askMap.find(order.price) == askMap.end())
         {
@@ -73,7 +73,7 @@ std::variant<std::vector<Match>, Order> OrderBook::process_order(SIDE side, uint
         askMap[order.price].push_back(order);
         order_it = askMap[order.price].end();
     }
-    else if (side == SIDE::BID)
+    else if (side == Side::BID)
     {
         if (bidMap.find(order.price) == bidMap.end())
         {
@@ -110,13 +110,13 @@ std::optional<Order> OrderBook::cancel_order(uint32_t orderID)
 
     Order rt = *item.order_it;
 
-    if (item.side == SIDE::BID)
+    if (item.side == Side::BID)
     {
         bidMap[item.price].erase(item.order_it);
         if (bidMap[item.price].empty())
             bidMap.erase(item.price);
     }
-    else if (item.side == SIDE::ASK)
+    else if (item.side == Side::ASK)
     {
         askMap[item.price].erase(item.order_it);
         if (askMap[item.price].empty())

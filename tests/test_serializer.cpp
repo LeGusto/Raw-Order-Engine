@@ -1,5 +1,5 @@
 #include "order_book.h"
-#include "serializer.cpp"
+#include "serializer.h"
 #include <cassert>
 #include <cstring>
 
@@ -110,33 +110,33 @@ void test_int32()
 
 void test_enum()
 {
-    puts("== enum SIDE ==");
+    puts("== enum Side ==");
     std::string buf;
-    SIDE val = SIDE::BID;
+    Side val = Side::BID;
     pack(buf, val);
 
     size_t offset = 0;
-    SIDE out = SIDE::ASK;
+    Side out = Side::ASK;
     unpack(buf, offset, out);
-    check(out == SIDE::BID, "value matches");
+    check(out == Side::BID, "value matches");
 }
 
 void test_order()
 {
     puts("== Order struct ==");
-    Order order(SIDE::BID, 50, 200, 7);
+    Order order(Side::BID, 50, 200, 7);
     std::string buf;
     pack(buf, order);
 
     size_t offset = 0;
-    Order out(SIDE::ASK, 0, 0, 0);
+    Order out(Side::ASK, 0, 0, 0);
     unpack(buf, offset, out);
 
     check(out.id == order.id, "id matches");
     check(out.quantity == 50, "quantity matches");
     check(out.price == 200, "price matches");
     check(out.customerID == 7, "customerID matches");
-    check(out.side == SIDE::BID, "side matches");
+    check(out.side == Side::BID, "side matches");
 }
 
 void test_multiple_fields()

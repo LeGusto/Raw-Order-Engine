@@ -2,6 +2,7 @@
 
 void Server::setup_addrinfo()
 {
+
     addrinfo hints;
 
     memset(&hints, 0, sizeof(hints));

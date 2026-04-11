@@ -6,18 +6,11 @@
 #include <vector>
 #include <optional>
 #include <variant>
+#include <format>
+#include <string>
+#include <iostream>
 
-enum class MessageType : uint8_t
-{
-    SUBMIT_ORDER = 0x01,
-    CANCEL_ORDER = 0x02,
-    ORDER_ACK = 0x03,
-    CANCEL_ACK = 0x04,
-    MATCH = 0x05,
-    REJECT = 0x06,
-};
-
-enum class SIDE
+enum class Side
 {
     ASK,
     BID
@@ -33,9 +26,11 @@ public:
     uint32_t quantity = 0;
     uint32_t price;
     uint32_t customerID;
-    SIDE side;
+    Side side;
 
-    Order(SIDE _side, uint32_t _quantity, uint32_t _price, uint32_t _customerID) : side(_side), quantity(_quantity), price(_price), customerID(_customerID), id(orderID++) {};
+    Order(Side _side, uint32_t _quantity, uint32_t _price, uint32_t _customerID) : side(_side), quantity(_quantity), price(_price), customerID(_customerID), id(orderID++) {};
+
+    Order() = default;
 
     auto fields() const
     {
@@ -45,6 +40,15 @@ public:
     auto fields()
     {
         return std::tie(id, quantity, price, customerID, side); // generate tuple<uint32_t&,...>
+    }
+
+    void print() const
+    {
+        std::cout << "Order(id=" << id
+                  << ", side=" << (side == Side::ASK ? "ASK" : "BID")
+                  << ", qty=" << quantity
+                  << ", price=" << price
+                  << ", customer=" << customerID << ")\n";
     }
 };
 
@@ -67,7 +71,7 @@ struct mapNavigation
 {
     std::list<Order>::iterator order_it;
     std::list<std::list<Order>::iterator>::iterator customer_it;
-    SIDE side;
+    Side side;
     uint32_t price;
 
     mapNavigation(std::list<Order>::iterator _order_it, std::list<std::list<Order>::iterator>::iterator _customer_it, Order &order) : order_it(_order_it), customer_it(_customer_it), side(order.side), price(order.price) {};
@@ -89,7 +93,7 @@ public:
     std::optional<Order> highest_bid();
     std::optional<Order> lowest_ask();
 
-    std::variant<std::vector<Match>, Order> process_order(SIDE side, uint32_t quantity, uint32_t price, uint32_t customerID);
+    std::variant<std::vector<Match>, Order> process_order(Side side, uint32_t quantity, uint32_t price, uint32_t customerID);
     std::optional<Order> cancel_order(uint32_t orderID);
 
     std::vector<Order> get_orders(uint32_t customerID);

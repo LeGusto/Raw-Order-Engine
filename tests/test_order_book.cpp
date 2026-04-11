@@ -31,7 +31,7 @@ void test_single_ask()
 {
     puts("== single ask ==");
     OrderBook book;
-    auto rt = book.process_order(SIDE::ASK, 10, 100, 1);
+    auto rt = book.process_order(Side::ASK, 10, 100, 1);
     check(std::holds_alternative<Order>(rt), "returns order (no match)");
     check(book.lowest_ask().has_value(), "ask exists");
     check(book.lowest_ask()->price == 100, "ask price correct");
@@ -43,7 +43,7 @@ void test_single_bid()
 {
     puts("== single bid ==");
     OrderBook book;
-    auto rt = book.process_order(SIDE::BID, 5, 200, 2);
+    auto rt = book.process_order(Side::BID, 5, 200, 2);
     check(std::holds_alternative<Order>(rt), "returns order (no match)");
     check(book.highest_bid().has_value(), "bid exists");
     check(book.highest_bid()->price == 200, "bid price correct");
@@ -55,8 +55,8 @@ void test_no_match_spread()
 {
     puts("== no match (bid < ask) ==");
     OrderBook book;
-    book.process_order(SIDE::ASK, 10, 100, 1);
-    auto rt = book.process_order(SIDE::BID, 5, 50, 2);
+    book.process_order(Side::ASK, 10, 100, 1);
+    auto rt = book.process_order(Side::BID, 5, 50, 2);
     check(std::holds_alternative<Order>(rt), "no match when bid < ask");
     check(book.lowest_ask()->price == 100, "ask still there");
     check(book.highest_bid()->price == 50, "bid still there");
@@ -66,8 +66,8 @@ void test_exact_match()
 {
     puts("== exact match ==");
     OrderBook book;
-    book.process_order(SIDE::ASK, 10, 100, 1);
-    auto rt = book.process_order(SIDE::BID, 10, 100, 2);
+    book.process_order(Side::ASK, 10, 100, 1);
+    auto rt = book.process_order(Side::BID, 10, 100, 2);
     check(std::holds_alternative<std::vector<Match>>(rt), "returns matches");
     auto matches = std::get<std::vector<Match>>(rt);
     check(matches.size() == 1, "one match");
@@ -80,8 +80,8 @@ void test_partial_match_ask_remaining()
 {
     puts("== partial match (ask remaining) ==");
     OrderBook book;
-    book.process_order(SIDE::ASK, 10, 100, 1);
-    auto rt = book.process_order(SIDE::BID, 3, 100, 2);
+    book.process_order(Side::ASK, 10, 100, 1);
+    auto rt = book.process_order(Side::BID, 3, 100, 2);
     check(std::holds_alternative<std::vector<Match>>(rt), "returns matches");
     auto matches = std::get<std::vector<Match>>(rt);
     check(matches[0].quantity == 3, "matched 3");
@@ -93,8 +93,8 @@ void test_partial_match_bid_remaining()
 {
     puts("== partial match (bid remaining) ==");
     OrderBook book;
-    book.process_order(SIDE::ASK, 3, 100, 1);
-    auto rt = book.process_order(SIDE::BID, 10, 100, 2);
+    book.process_order(Side::ASK, 3, 100, 1);
+    auto rt = book.process_order(Side::BID, 10, 100, 2);
     check(std::holds_alternative<std::vector<Match>>(rt), "returns matches");
     auto matches = std::get<std::vector<Match>>(rt);
     check(matches[0].quantity == 3, "matched 3");
@@ -106,8 +106,8 @@ void test_bid_higher_than_ask()
 {
     puts("== bid higher than ask ==");
     OrderBook book;
-    book.process_order(SIDE::ASK, 5, 100, 1);
-    auto rt = book.process_order(SIDE::BID, 5, 150, 2);
+    book.process_order(Side::ASK, 5, 100, 1);
+    auto rt = book.process_order(Side::BID, 5, 150, 2);
     check(std::holds_alternative<std::vector<Match>>(rt), "matches when bid > ask");
     check(!book.lowest_ask().has_value(), "ask consumed");
     check(!book.highest_bid().has_value(), "bid consumed");
@@ -117,10 +117,10 @@ void test_multiple_asks_price_priority()
 {
     puts("== multiple asks (price priority) ==");
     OrderBook book;
-    book.process_order(SIDE::ASK, 5, 200, 1);
-    book.process_order(SIDE::ASK, 5, 100, 2);
+    book.process_order(Side::ASK, 5, 200, 1);
+    book.process_order(Side::ASK, 5, 100, 2);
     check(book.lowest_ask()->price == 100, "lowest ask is cheapest");
-    auto rt = book.process_order(SIDE::BID, 5, 100, 3);
+    auto rt = book.process_order(Side::BID, 5, 100, 3);
     check(std::holds_alternative<std::vector<Match>>(rt), "matches cheapest ask");
     check(book.lowest_ask()->price == 200, "expensive ask remains");
 }
@@ -129,10 +129,10 @@ void test_multiple_bids_price_priority()
 {
     puts("== multiple bids (price priority) ==");
     OrderBook book;
-    book.process_order(SIDE::BID, 5, 50, 1);
-    book.process_order(SIDE::BID, 5, 100, 2);
+    book.process_order(Side::BID, 5, 50, 1);
+    book.process_order(Side::BID, 5, 100, 2);
     check(book.highest_bid()->price == 100, "highest bid is most expensive");
-    auto rt = book.process_order(SIDE::ASK, 5, 100, 3);
+    auto rt = book.process_order(Side::ASK, 5, 100, 3);
     check(std::holds_alternative<std::vector<Match>>(rt), "matches highest bid");
     check(book.highest_bid()->price == 50, "cheaper bid remains");
 }
@@ -141,7 +141,7 @@ void test_cancel_order()
 {
     puts("== cancel order ==");
     OrderBook book;
-    auto rt = book.process_order(SIDE::ASK, 10, 100, 1);
+    auto rt = book.process_order(Side::ASK, 10, 100, 1);
     auto order = std::get<Order>(rt);
     auto cancelled = book.cancel_order(order.id);
     check(cancelled.has_value(), "cancel returns order");
@@ -161,9 +161,9 @@ void test_multiple_matches()
 {
     puts("== multiple matches ==");
     OrderBook book;
-    book.process_order(SIDE::ASK, 5, 100, 1);
-    book.process_order(SIDE::ASK, 5, 110, 2);
-    auto rt = book.process_order(SIDE::BID, 8, 110, 3);
+    book.process_order(Side::ASK, 5, 100, 1);
+    book.process_order(Side::ASK, 5, 110, 2);
+    auto rt = book.process_order(Side::BID, 8, 110, 3);
     check(std::holds_alternative<std::vector<Match>>(rt), "returns matches");
     auto matches = std::get<std::vector<Match>>(rt);
     check(matches.size() == 2, "two matches");
@@ -176,9 +176,9 @@ void test_get_orders()
 {
     puts("== get orders ==");
     OrderBook book;
-    book.process_order(SIDE::ASK, 5, 100, 1);
-    book.process_order(SIDE::BID, 3, 50, 1);
-    book.process_order(SIDE::ASK, 7, 200, 2);
+    book.process_order(Side::ASK, 5, 100, 1);
+    book.process_order(Side::BID, 3, 50, 1);
+    book.process_order(Side::ASK, 7, 200, 2);
     auto orders = book.get_orders(1);
     check(orders.size() == 2, "customer 1 has 2 orders");
 }

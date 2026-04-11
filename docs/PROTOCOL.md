@@ -14,7 +14,7 @@ All multi-byte integers are network byte order.
 
 | Field          | Size    | Description                    |
 |----------------|---------|--------------------------------|
-| Message Length | 2 bytes | Total payload size (excl. self)|
+| Message Length | 2 bytes | Payload size only (excl. length and type) |
 | Type           | 1 byte  | Message type ID                |
 | Payload        | varies  | Type-specific fields           |
 
@@ -28,22 +28,10 @@ All multi-byte integers are network byte order.
 | 0x04    | CANCEL_ACK       | Server -> Client |
 | 0x05    | MATCH            | Server -> Client |
 | 0x06    | REJECT           | Server -> Client |
+| 0x07    | GET_ORDERS       | Client -> Server |
+| 0x08    | ORDERS_LIST      | Server -> Client |
 
 ## 0x01 SUBMIT_ORDER
-
-```
- 0               1               2               3
- 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                         Customer ID                           |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|     Side      |                    Price                      |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|               |                   Quantity                    |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|               |
-+-+-+-+-+-+-+-+-+
-```
 
 | Field       | Offset | Size    | Description            |
 |-------------|--------|---------|------------------------|
@@ -101,3 +89,29 @@ Total: 16 bytes
 |             |        |         | 0x03 = unknown order (cancel) |
 
 Total: 5 bytes
+
+## 0x07 GET_ORDERS
+
+| Field       | Offset | Size    | Description       |
+|-------------|--------|---------|-------------------|
+| Customer ID | 0      | 4 bytes | uint32, client ID |
+
+Total: 4 bytes
+
+## 0x08 ORDERS_LIST
+
+| Field       | Offset | Size    | Description                     |
+|-------------|--------|---------|---------------------------------|
+| Count       | 0      | 4 bytes | uint32, number of orders        |
+| Orders      | 4      | varies  | repeated Order entries (below)  |
+
+Each order entry:
+
+| Field    | Offset | Size    | Description            |
+|----------|--------|---------|------------------------|
+| Order ID | 0      | 4 bytes | uint32, order ID       |
+| Side     | 4      | 1 byte  | 0x00 = ASK, 0x01 = BID|
+| Price    | 5      | 4 bytes | uint32, price level    |
+| Quantity | 9      | 4 bytes | uint32, order quantity |
+
+Per entry: 13 bytes

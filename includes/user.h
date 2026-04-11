@@ -14,6 +14,9 @@
 #include <print>
 #include <thread>
 #include <atomic>
+#include <order_book.h>
+#include <protocol.h>
+#include "serializer.h"
 
 class User
 {
@@ -23,6 +26,10 @@ private:
     addrinfo *servinfo = nullptr;
     int fd = -1;
     int user_id = -1;
+
+    uint16_t strip_msg_len(const char *&msg);
+
+    MessageType strip_msg_type(const char *&msg);
 
 public:
     User();
@@ -37,6 +44,9 @@ public:
 
     void get_data();
     void use_server();
+
+    void submit_order(Side side, uint32_t quantity, uint32_t price);
+    void get_orders();
 
     ~User();
 };
