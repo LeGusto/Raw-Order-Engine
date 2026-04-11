@@ -6,7 +6,7 @@
 int passed = 0;
 int failed = 0;
 
-void check(bool cond, const char* name)
+void check(bool cond, const char *name)
 {
     if (cond)
     {

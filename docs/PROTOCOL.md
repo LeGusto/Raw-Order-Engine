@@ -1,6 +1,6 @@
 # Order Book Wire Protocol
 
-All multi-byte integers are big-endian (network byte order).
+All multi-byte integers are network byte order.
 
 ## Message Framing
 

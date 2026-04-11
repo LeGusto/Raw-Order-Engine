@@ -65,11 +65,12 @@ public:
 
 struct mapNavigation
 {
-    std::list<Order>::iterator it;
+    std::list<Order>::iterator order_it;
+    std::list<std::list<Order>::iterator>::iterator customer_it;
     SIDE side;
     uint32_t price;
 
-    mapNavigation(std::list<Order>::iterator _it, Order &order) : it(_it), side(order.side), price(order.price) {};
+    mapNavigation(std::list<Order>::iterator _order_it, std::list<std::list<Order>::iterator>::iterator _customer_it, Order &order) : order_it(_order_it), customer_it(_customer_it), side(order.side), price(order.price) {};
 };
 
 class OrderBook
@@ -79,6 +80,8 @@ private:
     std::map<uint32_t, std::list<Order>, std::greater<uint32_t>> bidMap;
 
     std::map<uint32_t, mapNavigation> orderIDMap;
+
+    std::map<uint32_t, std::list<std::list<Order>::iterator>> customerIDMap;
 
     std::vector<Match> match_orders();
 
