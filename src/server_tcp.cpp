@@ -117,6 +117,10 @@ void ServerTCP::process_request(int fd)
         std::string payload;
 
         std::vector<Order> orders = book.get_orders(customer_id);
+        for (auto &v : orders)
+        {
+            v.print();
+        }
         pack(payload, orders);
 
         std::string response;

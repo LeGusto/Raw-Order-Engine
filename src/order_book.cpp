@@ -18,6 +18,15 @@ std::optional<Order> OrderBook::lowest_ask()
     return *askMap.begin()->second.begin();
 }
 
+void OrderBook::remove_order_refs(uint32_t orderID)
+{
+    auto& nav = orderIDMap.at(orderID);
+    customerIDMap[nav.order_it->customerID].erase(nav.customer_it);
+    if (customerIDMap[nav.order_it->customerID].empty())
+        customerIDMap.erase(nav.order_it->customerID);
+    orderIDMap.erase(orderID);
+}
+
 std::vector<Match> OrderBook::match_orders()
 {
     std::vector<Match> res;
@@ -33,7 +42,7 @@ std::vector<Match> OrderBook::match_orders()
 
             if (ptr_a->begin()->quantity == qty)
             {
-                this->orderIDMap.erase(ptr_a->begin()->id);
+                remove_order_refs(ptr_a->begin()->id);
                 ptr_a->pop_front();
                 if (ptr_a->empty())
                     askMap.erase(askMap.begin());
@@ -45,7 +54,7 @@ std::vector<Match> OrderBook::match_orders()
 
             if (ptr_b->begin()->quantity == qty)
             {
-                this->orderIDMap.erase(ptr_b->begin()->id);
+                remove_order_refs(ptr_b->begin()->id);
                 ptr_b->pop_front();
                 if (ptr_b->empty())
                     bidMap.erase(bidMap.begin());
@@ -123,10 +132,7 @@ std::optional<Order> OrderBook::cancel_order(uint32_t orderID)
             askMap.erase(item.price);
     }
 
-    orderIDMap.erase(orderID);
-    customerIDMap[rt.customerID].erase(item.customer_it);
-    if (customerIDMap[rt.customerID].empty())
-        customerIDMap.erase(rt.customerID);
+    remove_order_refs(orderID);
 
     return rt;
 }

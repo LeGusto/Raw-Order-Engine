@@ -11,4 +11,4 @@ constexpr const int AI_SOCKTYPE = SOCK_STREAM;
 constexpr const int AI_FLAGS = AI_PASSIVE; // fill in with own IP
 constexpr const size_t UDP_PACKET_SIZE = 1024;
 constexpr const bool BLOCKING = true;
-constexpr const int NUM_USERS = 10;
+constexpr const int NUM_USERS = 1;

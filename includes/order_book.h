@@ -88,6 +88,7 @@ private:
     std::map<uint32_t, std::list<std::list<Order>::iterator>> customerIDMap;
 
     std::vector<Match> match_orders();
+    void remove_order_refs(uint32_t orderID);
 
 public:
     std::optional<Order> highest_bid();
