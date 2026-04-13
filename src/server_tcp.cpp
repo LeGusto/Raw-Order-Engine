@@ -91,6 +91,10 @@ void ServerTCP::use_poll()
     while (true)
     {
         int events = poll(&pfds[0], pfds.size(), -1);
+        if (events == -1)
+        {
+            throw std::runtime_error("Poll failed with -1");
+        }
 
         if (pfds[0].revents & POLLIN)
         {
@@ -114,8 +118,8 @@ void ServerTCP::use_poll()
                 ssize_t n = recv(pfds[i].fd, &peek, 1, MSG_PEEK);
                 if (n <= 0)
                     remove_fd(i);
-                i--;
-                else process_request(pfds[i].fd);
+                else
+                    process_request(pfds[i].fd);
             }
         }
     }
