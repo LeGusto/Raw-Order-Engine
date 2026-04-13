@@ -110,8 +110,8 @@ void unpack(const std::string &buf, size_t &offset, T &field)
         if constexpr (std::is_same_v<float, T>)
         {
             uint64_t tmp;
-            std::memcpy(&tmp, buf.data() + offset, sizeof(T));
-            offset += sizeof(T);
+            std::memcpy(&tmp, buf.data() + offset, sizeof(uint64_t));
+            offset += sizeof(uint64_t);
 
             tmp = ntohll(tmp);
             field = unpack754(tmp, 32, 8);
@@ -119,8 +119,8 @@ void unpack(const std::string &buf, size_t &offset, T &field)
         else if constexpr (std::is_same_v<double, T>)
         {
             uint64_t tmp;
-            std::memcpy(&tmp, buf.data() + offset, sizeof(T));
-            offset += sizeof(T);
+            std::memcpy(&tmp, buf.data() + offset, sizeof(uint64_t));
+            offset += sizeof(uint64_t);
 
             tmp = ntohll(tmp);
             field = unpack754(tmp, 64, 11);

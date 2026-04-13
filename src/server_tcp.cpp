@@ -101,7 +101,7 @@ void ServerTCP::use_poll()
             accept_socket();
         }
 
-        for (int i = 1; i < pfds.size(); i++)
+        for (int i = 1; i < static_cast<int>(pfds.size()); i++)
         {
             if ((pfds[i].revents & POLLHUP) || (pfds[i].revents & POLLERR))
             {

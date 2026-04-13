@@ -20,7 +20,7 @@ constexpr uint32_t MAX_REQUEST_SIZE = 128000;
 
 struct SubmitOrderPayload
 {
-    int user_id = 0;
+    uint32_t user_id = 0;
     Side side = Side::ASK;
     uint32_t price = 0;
     uint32_t quantity = 0;

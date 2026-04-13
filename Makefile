@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++23 -I. -Isrc -Iincludes # for includes
+CXXFLAGS = -std=c++23 -I. -Isrc -Iincludes -Wall -Wextra -Werror -g -fsanitize=address,undefined
 
 build_server: src/server_base.cpp src/server_main.cpp src/server_tcp.cpp src/server_udp.cpp src/serializer.cpp src/order_book.cpp
 	g++ $(CXXFLAGS) -o bin/server src/server_main.cpp src/server_base.cpp src/server_tcp.cpp src/server_udp.cpp src/serializer.cpp src/order_book.cpp

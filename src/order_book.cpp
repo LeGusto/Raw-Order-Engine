@@ -92,7 +92,6 @@ std::variant<std::vector<Match>, Order> OrderBook::process_order(Side side, uint
 
     mapNavigation entry = {order_it, customer_it, order};
     orderIDMap.insert({order.id, entry});
-    ;
 
     std::vector<Match> matches = match_orders();
     if (!matches.empty())
@@ -103,13 +102,15 @@ std::variant<std::vector<Match>, Order> OrderBook::process_order(Side side, uint
 
 std::optional<Order> OrderBook::cancel_order(uint32_t orderID)
 {
-    if (orderIDMap.find(orderID) == orderIDMap.end())
+    auto found = orderIDMap.find(orderID);
+    if (found == orderIDMap.end())
         return std::nullopt;
 
-    auto found = orderIDMap.find(orderID);
     mapNavigation item = found->second;
 
     Order rt = *item.order_it;
+
+    remove_order_refs(orderID);
 
     if (item.side == Side::BID)
     {
@@ -123,8 +124,6 @@ std::optional<Order> OrderBook::cancel_order(uint32_t orderID)
         if (askMap[item.price].empty())
             askMap.erase(item.price);
     }
-
-    remove_order_refs(orderID);
 
     return rt;
 }

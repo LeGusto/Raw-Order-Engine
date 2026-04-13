@@ -43,7 +43,7 @@ void Server::get_socket()
         log("Failed to get socket, trying different address\n");
     }
 
-    setsockopt(sock_desc, SOL_SOCKET, SO_REUSEPORT, &reuse_port, sizeof(reuse_port));
+    setsockopt(sock_desc, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(reuse_addr));
     if (!BLOCKING)
     {
         fcntl(sock_desc, F_SETFL, O_NONBLOCK);
@@ -126,7 +126,7 @@ void Server::print_addrinfo()
 
 void Server::remove_fd(int &i)
 {
-    if (i >= pfds.size() || i < 0)
+    if (i >= static_cast<int>(pfds.size()) || i < 0)
     {
         throw std::runtime_error("Invalid pfds index");
     }

@@ -29,7 +29,7 @@ public:
     uint32_t customerID;
     Side side;
 
-    Order(Side _side, uint32_t _quantity, uint32_t _price, uint32_t _customerID) : side(_side), quantity(_quantity), price(_price), customerID(_customerID), id(orderID++) {};
+    Order(Side _side, uint32_t _quantity, uint32_t _price, uint32_t _customerID) : id(orderID++), quantity(_quantity), price(_price), customerID(_customerID), side(_side) {};
 
     Order() = default;
 

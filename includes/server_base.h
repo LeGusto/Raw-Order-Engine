@@ -24,7 +24,7 @@ protected:
     addrinfo *servinfo = nullptr;
     addrinfo *servinfo_head = nullptr; // for freeing linked list
     int32_t sock_desc = -1;
-    int32_t reuse_port = 1; // skip TIME_WAIT for closed ports, doesn't wait for leftover packets
+    int32_t reuse_addr = 1; // skip TIME_WAIT for closed ports, doesn't wait for leftover packets
     std::vector<pollfd> pfds;
     OrderBook book;
 

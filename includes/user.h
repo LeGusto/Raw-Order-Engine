@@ -21,11 +21,11 @@
 class User
 {
 private:
-    inline static std::atomic<int> user_count{0};
+    inline static std::atomic<uint32_t> user_count{0};
     addrinfo *servinfo_head = nullptr;
     addrinfo *servinfo = nullptr;
     int fd = -1;
-    int user_id = -1;
+    uint32_t user_id = 0;
 
 public:
     User();
@@ -38,7 +38,6 @@ public:
 
     void connect_socket();
 
-    void get_data();
     void use_server();
 
     void submit_order(Side side, uint32_t quantity, uint32_t price);

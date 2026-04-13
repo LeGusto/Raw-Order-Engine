@@ -21,7 +21,7 @@ int main()
         threads.emplace_back(create_user);
     }
 
-    for (int i = 0; i < threads.size(); i++)
+    for (int i = 0; i < static_cast<int>(threads.size()); i++)
     {
         threads[i].join();
     }
