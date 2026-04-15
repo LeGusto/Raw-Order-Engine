@@ -1,6 +1,7 @@
 # Order Book Wire Protocol
 
 All multi-byte integers are network byte order.
+Maximum client request payload: 32 bytes.
 
 ## Message Framing
 

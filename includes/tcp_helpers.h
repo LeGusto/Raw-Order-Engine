@@ -33,3 +33,18 @@ inline void tcp_send(int fd, const std::string &msg)
         total_sent += bytes_sent;
     }
 }
+
+inline void tcp_recv(int fd, char *buf, size_t len)
+{
+    size_t received = 0;
+    while (received < len)
+    {
+        ssize_t n = recv(fd, buf + received, len - received, 0);
+        if (n <= 0)
+        {
+            throw std::runtime_error("Failed to recv");
+        }
+        received += n;
+        len -= n;
+    }
+}

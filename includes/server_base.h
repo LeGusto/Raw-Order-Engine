@@ -14,9 +14,42 @@
 #include <fcntl.h>
 #include "config.h"
 #include <poll.h>
+#include <array>
 #include "order_book.h"
 #include "protocol.h"
 #include "serializer.h"
+
+struct ClientBuffer
+{
+    char data[MAX_REQUEST_SIZE + 3]; // +3 for the header
+    size_t received = 0;
+
+    void append(const char *src, size_t len)
+    {
+        if (received + len > MAX_REQUEST_SIZE)
+        {
+            throw std::runtime_error("Client buffer append exceeds max capacity");
+        }
+        std::memcpy(&data + received, src, len);
+        received += len;
+    }
+
+    bool has_header() const { return received >= 3; }
+
+    uint16_t msg_len() const
+    {
+        uint16_t len;
+        std::memcpy(&len, &data, 2);
+        return ntohs(len);
+    }
+
+    bool is_complete() const
+    {
+        return has_header() && received >= 3 + msg_len();
+    }
+
+    void reset() { received = 0; }
+};
 
 class Server
 {
@@ -26,6 +59,7 @@ protected:
     int32_t sock_desc = -1;
     int32_t reuse_addr = 1; // skip TIME_WAIT for closed ports, doesn't wait for leftover packets
     std::vector<pollfd> pfds;
+    std::vector<ClientBuffer> client_buffers;
     OrderBook book;
 
     void setup_addrinfo();

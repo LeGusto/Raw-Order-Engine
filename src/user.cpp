@@ -66,14 +66,12 @@ void User::submit_order(Side side, uint32_t quantity, uint32_t price)
     tcp_send(fd, msg);
 
     char header[3];
-    if (recv(fd, header, 3, MSG_WAITALL) != 3)
-        return;
+    tcp_recv(fd, header, 3);
 
     auto [msg_len, msg_type] = strip_headers(header);
 
     std::vector<char> response(msg_len);
-    if (recv(fd, response.data(), msg_len, MSG_WAITALL) != msg_len)
-        return;
+    tcp_recv(fd, response.data(), msg_len);
 
     std::string buf(response.data(), msg_len);
     size_t offset = 0;
@@ -82,6 +80,7 @@ void User::submit_order(Side side, uint32_t quantity, uint32_t price)
     {
         uint32_t order_id;
         unpack(buf, offset, order_id);
+        order_ids.push_back(order_id);
         log(std::format("Order acknowledged: id={}", order_id));
     }
     else if (msg_type == MessageType::MATCH)
@@ -95,6 +94,38 @@ void User::submit_order(Side side, uint32_t quantity, uint32_t price)
     }
 }
 
+void User::cancel_order(uint32_t order_id)
+{
+    std::string msg;
+    construct_message<MessageType::CANCEL_ORDER>(msg, order_id);
+    tcp_send(fd, msg);
+
+    char header[3];
+    tcp_recv(fd, header, 3);
+
+    auto [msg_len, msg_type] = strip_headers(header);
+
+    std::vector<char> response(msg_len);
+    tcp_recv(fd, response.data(), msg_len);
+
+    std::string buf(response.data(), msg_len);
+    size_t offset = 0;
+
+    if (msg_type == MessageType::CANCEL_ACK)
+    {
+        uint32_t cancelled_id;
+        unpack(buf, offset, cancelled_id);
+        log(std::format("Order cancelled: id={}", cancelled_id));
+        std::erase(order_ids, cancelled_id);
+    }
+    else if (msg_type == MessageType::REJECT)
+    {
+        RejectReason reason;
+        unpack(buf, offset, reason);
+        log(std::format("Cancel rejected: reason={}", static_cast<int>(reason)));
+    }
+}
+
 void User::get_orders()
 {
     std::string msg;
@@ -102,15 +133,14 @@ void User::get_orders()
     tcp_send(fd, msg);
 
     char header[3];
-    if (recv(fd, header, 3, MSG_WAITALL) != 3)
-        return;
+    tcp_recv(fd, header, 3);
 
     auto [msg_len, msg_type] = strip_headers(header);
 
     if (msg_type == MessageType::ORDERS_LIST)
     {
         std::vector<char> response(msg_len);
-        recv(fd, response.data(), msg_len, MSG_WAITALL);
+        tcp_recv(fd, response.data(), msg_len);
         std::string buf(response.data(), msg_len);
 
         std::vector<Order> orders;
@@ -119,7 +149,8 @@ void User::get_orders()
 
         for (auto &v : orders)
         {
-            v.print();
+            log(std::format("Order(id={}, side={}, qty={}, price={}, customer={})",
+                v.id, v.side == Side::ASK ? "ASK" : "BID", v.quantity, v.price, v.customerID));
         }
     }
 }
@@ -135,11 +166,18 @@ void User::use_server()
     std::uniform_int_distribution<uint32_t> price_dist(50, 200);
     std::uniform_int_distribution<uint32_t> qty_dist(1, 100);
     std::uniform_int_distribution<int> side_dist(0, 1);
+    std::uniform_int_distribution<int> cancel_chance(0, 3); // 25% chance to cancel
 
     for (int i = 0; i < 5; i++)
     {
         Side side = static_cast<Side>(side_dist(gen));
         submit_order(side, qty_dist(gen), price_dist(gen));
+
+        if (!order_ids.empty() && cancel_chance(gen) == 0)
+        {
+            std::uniform_int_distribution<int> idx_dist(0, order_ids.size() - 1);
+            cancel_order(order_ids[idx_dist(gen)]);
+        }
     }
 
     get_orders();

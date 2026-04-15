@@ -22,6 +22,7 @@ void ServerTCP::accept_socket()
         throw std::runtime_error(strerror(errno));
     }
     pfds.push_back({new_fd, POLLIN, 0});
+    client_buffers.push_back({});
     log("Accepted connection:\n");
     print_sockaddr(reinterpret_cast<sockaddr *>(&sa), sa_len);
 }
@@ -32,18 +33,11 @@ void ServerTCP::start_server()
     use_poll();
 }
 
-void ServerTCP::process_request(int fd)
+void ServerTCP::process_request(int i)
 {
-    char header[3];
-    if (recv(fd, header, 3, MSG_WAITALL) != 3)
-    {
-        std::string response;
-        construct_message<MessageType::REJECT>(response, RejectReason::INVALID_MESSAGE);
-        tcp_send(fd, response);
-        return;
-    }
-
-    auto [msg_len, msg_type] = strip_headers(header);
+    uint32_t fd = pfds[i].fd;
+    auto buffer = client_buffers[i];
+    auto [msg_len, msg_type] = strip_headers(buffer.data);
 
     if (msg_len > MAX_REQUEST_SIZE)
     {
@@ -51,29 +45,19 @@ void ServerTCP::process_request(int fd)
         construct_message<MessageType::REJECT>(response, RejectReason::PAYLOAD_TOO_LARGE);
         tcp_send(fd, response);
         return;
-    }
+    };
 
-    std::vector<char> payload(msg_len);
-    if (recv(fd, payload.data(), msg_len, MSG_WAITALL) != msg_len)
-    {
-        std::string response;
-        construct_message<MessageType::REJECT>(response, RejectReason::INVALID_MESSAGE);
-        tcp_send(fd, response);
-        return;
-    }
-
-    std::string buf(payload.data(), msg_len);
     size_t offset = 0;
+    std::string response;
 
     if (msg_type == MessageType::SUBMIT_ORDER)
     {
         SubmitOrderPayload order_payload{};
-        unpack(buf, offset, order_payload);
+        unpack(buffer.data, offset, order_payload);
 
         log("{}, {}, {}, {}", order_payload.user_id, static_cast<int>(order_payload.side), order_payload.price, order_payload.quantity);
 
         auto res = book.process_order(order_payload.side, order_payload.quantity, order_payload.price, order_payload.user_id);
-        std::string response;
         if (std::holds_alternative<Order>(res))
         {
             construct_message<MessageType::ORDER_ACK>(response, std::get<Order>(res).id);
@@ -86,28 +70,38 @@ void ServerTCP::process_request(int fd)
         {
             throw std::runtime_error("Order submit return type invalid");
         }
-
-        tcp_send(fd, response);
     }
     else if (msg_type == MessageType::GET_ORDERS)
     {
         uint32_t customer_id;
-        unpack(buf, offset, customer_id);
+        unpack(buffer.data, offset, customer_id);
 
         std::vector<Order> orders = book.get_orders(customer_id);
 
-        std::string response;
         construct_message<MessageType::ORDERS_LIST>(response, orders);
-        tcp_send(fd, response);
+    }
+    else if (msg_type == MessageType::CANCEL_ORDER)
+    {
+        uint32_t order_id;
+        unpack(buffer.data, offset, order_id);
+
+        auto res = book.cancel_order(order_id);
+
+        if (res.has_value())
+        {
+            construct_message<MessageType::CANCEL_ACK>(response, order_id);
+        }
+        else
+        {
+            construct_message<MessageType::REJECT>(response, RejectReason::ORDER_NOT_FOUND);
+        }
     }
     else
     {
-
-        std::string response;
         construct_message<MessageType::REJECT>(response, RejectReason::INVALID_MESSAGE);
-        tcp_send(fd, response);
-        return;
     }
+
+    tcp_send(fd, response);
 }
 
 void ServerTCP::use_poll()
@@ -144,8 +138,10 @@ void ServerTCP::use_poll()
                 ssize_t n = recv(pfds[i].fd, &peek, 1, MSG_PEEK);
                 if (n <= 0)
                     remove_fd(i);
-                else
+                else if (client_buffers[i].is_complete())
+                {
                     process_request(pfds[i].fd);
+                }
             }
         }
     }

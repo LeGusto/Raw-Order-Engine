@@ -132,7 +132,9 @@ void Server::remove_fd(int &i)
     }
     close(pfds[i].fd);
     std::swap(pfds[i], pfds.back());
+    std::swap(client_buffers[i], client_buffers.back());
     pfds.pop_back();
+    client_buffers.pop_back();
     i--;
 }
 

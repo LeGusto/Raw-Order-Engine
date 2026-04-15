@@ -10,5 +10,5 @@ constexpr const int AI_FAMILY = AF_INET6;
 constexpr const int AI_SOCKTYPE = SOCK_STREAM;
 constexpr const int AI_FLAGS = AI_PASSIVE; // fill in with own IP
 constexpr const size_t UDP_PACKET_SIZE = 1024;
-constexpr const bool BLOCKING = true;
+constexpr const bool BLOCKING = false;
 constexpr const int NUM_USERS = 10;

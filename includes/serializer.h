@@ -79,11 +79,11 @@ void pack(std::string &buf, const T &val)
 }
 
 template <typename T>
-void unpack(const std::string &buf, size_t &offset, T &field)
+void unpack(const char *buf, size_t &offset, T &field)
 {
     if constexpr (std::is_integral_v<T>)
     {
-        std::memcpy(&field, buf.data() + offset, sizeof(T));
+        std::memcpy(&field, buf + offset, sizeof(T));
         offset += sizeof(T);
 
         if constexpr (sizeof(T) == 2)
@@ -110,7 +110,7 @@ void unpack(const std::string &buf, size_t &offset, T &field)
         if constexpr (std::is_same_v<float, T>)
         {
             uint64_t tmp;
-            std::memcpy(&tmp, buf.data() + offset, sizeof(uint64_t));
+            std::memcpy(&tmp, buf + offset, sizeof(uint64_t));
             offset += sizeof(uint64_t);
 
             tmp = ntohll(tmp);
@@ -119,7 +119,7 @@ void unpack(const std::string &buf, size_t &offset, T &field)
         else if constexpr (std::is_same_v<double, T>)
         {
             uint64_t tmp;
-            std::memcpy(&tmp, buf.data() + offset, sizeof(uint64_t));
+            std::memcpy(&tmp, buf + offset, sizeof(uint64_t));
             offset += sizeof(uint64_t);
 
             tmp = ntohll(tmp);
