@@ -13,6 +13,7 @@ void ServerTCP::listen_socket()
 
 void ServerTCP::accept_socket()
 {
+
     int32_t new_fd = -1;
     sockaddr_storage sa{};
     socklen_t sa_len = sizeof(sa);
@@ -21,6 +22,13 @@ void ServerTCP::accept_socket()
     {
         throw std::runtime_error(strerror(errno));
     }
+    if (pfd_count >= BACKLOG + 1)
+    {
+        log("Server full, rejecting connection");
+        close(new_fd);
+        return;
+    }
+
     pfds[pfd_count] = {new_fd, POLLIN, 0};
     client_buffers[pfd_count].reset();
     pfd_count++;
@@ -120,12 +128,20 @@ void ServerTCP::use_poll()
             throw std::runtime_error("Poll failed with -1");
         }
 
-        if (pfds[0].revents & POLLIN)
+        try
         {
-            if (pfd_count < BACKLOG + 1)
+            if (pfds[0].revents & POLLIN)
             {
-                accept_socket();
+                if (pfd_count < BACKLOG + 1)
+                {
+                    accept_socket();
+                }
             }
+        }
+        catch (const std::exception &e)
+        {
+            log("Failed to accept socket");
+            log("Error: {}", e.what());
         }
 
         for (int i = 1; i < pfd_count; i++)
@@ -141,19 +157,28 @@ void ServerTCP::use_poll()
             }
             else if (pfds[i].revents & POLLIN)
             {
-                auto &buf = client_buffers[i];
-                ssize_t n = recv(pfds[i].fd, buf.data + buf.received, sizeof(buf.data) - buf.received, 0);
-                if (n <= 0)
+                try
                 {
-                    remove_fd(i);
-                }
-                else
-                {
-                    buf.received += n;
-                    if (buf.is_complete())
+                    auto &buf = client_buffers[i];
+                    ssize_t n = recv(pfds[i].fd, buf.data + buf.received, sizeof(buf.data) - buf.received, 0);
+                    if (n <= 0)
                     {
-                        process_request(i);
+                        remove_fd(i);
                     }
+                    else
+                    {
+                        buf.received += n;
+                        if (buf.is_complete())
+                        {
+                            process_request(i);
+                        }
+                    }
+                }
+                catch (const std::exception &e)
+                {
+                    log("Error processing client, removing...");
+                    log("Error: {}", e.what());
+                    remove_fd(i);
                 }
             }
         }
