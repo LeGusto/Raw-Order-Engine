@@ -1,5 +1,33 @@
 #include "server_tcp.h"
 #include "tcp_helpers.h"
+#include <ctime>
+#include <algorithm>
+#include <print>
+
+volatile sig_atomic_t ServerTCP::should_exit = 0;
+
+void ServerTCP::signal_handler(int)
+{
+    should_exit = 1;
+}
+
+void ServerTCP::dump_latencies()
+{
+    if (latencies_ns.empty())
+    {
+        std::print("[bench] no samples collected\n");
+        return;
+    }
+    std::sort(latencies_ns.begin(), latencies_ns.end());
+    auto pct = [&](double p) {
+        size_t idx = static_cast<size_t>(latencies_ns.size() * p);
+        if (idx >= latencies_ns.size()) idx = latencies_ns.size() - 1;
+        return latencies_ns[idx];
+    };
+    std::print("[bench] count={}\n", latencies_ns.size());
+    std::print("[bench] min={}ns p50={}ns p95={}ns p99={}ns p99.9={}ns max={}ns\n",
+               latencies_ns.front(), pct(0.50), pct(0.95), pct(0.99), pct(0.999), latencies_ns.back());
+}
 
 void ServerTCP::listen_socket()
 {
@@ -120,11 +148,16 @@ void ServerTCP::use_poll()
     pfds[0] = {sock_desc, POLLIN, 0};
     pfd_count = 1;
 
-    while (true)
+    latencies_ns.reserve(1'000'000);
+    std::signal(SIGINT, &ServerTCP::signal_handler);
+
+    while (!should_exit)
     {
         int events = poll(pfds, pfd_count, -1);
         if (events == -1)
         {
+            if (errno == EINTR)
+                continue;
             throw std::runtime_error("Poll failed with -1");
         }
 
@@ -170,7 +203,14 @@ void ServerTCP::use_poll()
                         buf.received += n;
                         if (buf.is_complete())
                         {
+                            struct timespec t_start, t_end;
+                            clock_gettime(CLOCK_MONOTONIC, &t_start);
                             process_request(i);
+                            clock_gettime(CLOCK_MONOTONIC, &t_end);
+                            uint64_t ns = (t_end.tv_sec - t_start.tv_sec) * 1'000'000'000ULL
+                                        + (t_end.tv_nsec - t_start.tv_nsec);
+                            if (latencies_ns.size() < latencies_ns.capacity())
+                                latencies_ns.push_back(ns);
                         }
                     }
                 }
@@ -183,4 +223,6 @@ void ServerTCP::use_poll()
             }
         }
     }
+
+    dump_latencies();
 }

@@ -12,3 +12,4 @@ constexpr const int AI_FLAGS = AI_PASSIVE; // fill in with own IP
 constexpr const size_t UDP_PACKET_SIZE = 1024;
 constexpr const bool BLOCKING = false;
 constexpr const int NUM_USERS = 10;
+constexpr const int USER_REQUESTS = 1000;

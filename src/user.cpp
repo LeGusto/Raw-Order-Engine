@@ -168,7 +168,7 @@ void User::use_server()
     std::uniform_int_distribution<int> side_dist(0, 1);
     std::uniform_int_distribution<int> cancel_chance(0, 3); // 25% chance to cancel
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < USER_REQUESTS; i++)
     {
         Side side = static_cast<Side>(side_dist(gen));
         submit_order(side, qty_dist(gen), price_dist(gen));
