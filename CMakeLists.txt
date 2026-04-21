@@ -44,6 +44,7 @@ add_executable(server
     src/serializer.cpp
     src/order_book.cpp
 )
+target_compile_definitions(server PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
 add_executable(user
     src/user_spawner.cpp

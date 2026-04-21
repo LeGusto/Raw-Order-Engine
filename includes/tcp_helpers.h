@@ -50,6 +50,5 @@ inline void tcp_recv(int fd, char *buf, size_t len)
             throw std::runtime_error("Failed to recv");
         }
         received += n;
-        len -= n;
     }
 }

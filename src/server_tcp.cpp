@@ -3,6 +3,9 @@
 #include <ctime>
 #include <algorithm>
 #include <print>
+#include <filesystem>
+#include <fstream>
+#include <chrono>
 
 volatile sig_atomic_t ServerTCP::should_exit = 0;
 
@@ -19,14 +22,28 @@ void ServerTCP::dump_latencies()
         return;
     }
     std::sort(latencies_ns.begin(), latencies_ns.end());
-    auto pct = [&](double p) {
+    auto pct = [&](double p)
+    {
         size_t idx = static_cast<size_t>(latencies_ns.size() * p);
-        if (idx >= latencies_ns.size()) idx = latencies_ns.size() - 1;
+        if (idx >= latencies_ns.size())
+            idx = latencies_ns.size() - 1;
         return latencies_ns[idx];
     };
     std::print("[bench] count={}\n", latencies_ns.size());
     std::print("[bench] min={}ns p50={}ns p95={}ns p99={}ns p99.9={}ns max={}ns\n",
                latencies_ns.front(), pct(0.50), pct(0.95), pct(0.99), pct(0.999), latencies_ns.back());
+
+    std::filesystem::path log_dir = std::filesystem::path(PROJECT_ROOT) / "logs";
+    std::filesystem::create_directory(log_dir);
+    std::ofstream out(log_dir / "bench.txt", std::ios::app);
+    if (!out)
+        return;
+    auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    char ts[32];
+    std::strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    std::print(out, "{} count={} min={} p50={} p95={} p99={} p99.9={} max={}\n",
+               ts, latencies_ns.size(), latencies_ns.front(),
+               pct(0.50), pct(0.95), pct(0.99), pct(0.999), latencies_ns.back());
 }
 
 void ServerTCP::listen_socket()
@@ -149,7 +166,7 @@ void ServerTCP::use_poll()
     pfd_count = 1;
 
     latencies_ns.reserve(1'000'000);
-    std::signal(SIGINT, &ServerTCP::signal_handler);
+    std::signal(SIGINT, &ServerTCP::signal_handler); //
 
     while (!should_exit)
     {
@@ -207,8 +224,7 @@ void ServerTCP::use_poll()
                             clock_gettime(CLOCK_MONOTONIC, &t_start);
                             process_request(i);
                             clock_gettime(CLOCK_MONOTONIC, &t_end);
-                            uint64_t ns = (t_end.tv_sec - t_start.tv_sec) * 1'000'000'000ULL
-                                        + (t_end.tv_nsec - t_start.tv_nsec);
+                            uint64_t ns = (t_end.tv_sec - t_start.tv_sec) * 1'000'000'000ULL + (t_end.tv_nsec - t_start.tv_nsec);
                             if (latencies_ns.size() < latencies_ns.capacity())
                                 latencies_ns.push_back(ns);
                         }
