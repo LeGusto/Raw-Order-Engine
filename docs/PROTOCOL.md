@@ -6,18 +6,20 @@ Maximum client request payload: 32 bytes.
 ## Message Framing
 
 ```
- 0               1               2               3
- 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|         Message Length        |     Type      |   Payload...  |
+|                         Message Length                        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     Type      |                 Payload...                    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-| Field          | Size    | Description                    |
-|----------------|---------|--------------------------------|
-| Message Length | 2 bytes | Payload size only (excl. length and type) |
-| Type           | 1 byte  | Message type ID                |
-| Payload        | varies  | Type-specific fields           |
+| Field          | Size    | Description                               |
+|----------------|---------|-------------------------------------------|
+| Message Length | 4 bytes | Payload size only (excl. length and type) |
+| Type           | 1 byte  | Message type ID                           |
+| Payload        | varies  | Type-specific fields                      |
 
 ## Message Types
 
