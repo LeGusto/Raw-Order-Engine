@@ -11,7 +11,7 @@
 #include <iostream>
 #include <atomic>
 
-enum class Side
+enum class Side : uint8_t
 {
     ASK,
     BID
