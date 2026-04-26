@@ -12,8 +12,8 @@ std::string_view extract_name()
     return rt;
 }
 
-template <auto T>
-std::string get_enum(T e, int... V)
+template <auto T, int... V>
+std::string_view get_enum(T e, int... V)
 {
     if (static_cast<int>(e) == V)
         return extract_name(e);
