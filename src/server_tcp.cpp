@@ -1,13 +1,7 @@
 #include "server_tcp.h"
 #include "tcp_helpers.h"
-#include <ctime>
-
-volatile sig_atomic_t ServerTCP::should_exit = 0;
-
-void ServerTCP::signal_handler(int)
-{
-    should_exit = 1;
-}
+#include "chrono"
+#include "enum_name.h"
 
 void ServerTCP::listen_socket()
 {
@@ -50,7 +44,7 @@ void ServerTCP::start_server()
     use_poll();
 }
 
-MessageType ServerTCP::process_request(int i)
+void ServerTCP::process_request(int i)
 {
     int fd = pfds[i].fd;
     auto &buffer = client_buffers[i];
@@ -62,11 +56,13 @@ MessageType ServerTCP::process_request(int i)
         construct_message<MessageType::REJECT>(response, RejectReason::PAYLOAD_TOO_LARGE);
         tcp_send(fd, response);
         buffer.reset();
-        return msg_type;
+        return;
     };
 
     size_t offset = 5; // skip header (4 length + 1 type)
     std::string response;
+
+    auto t1 = std::chrono::steady_clock::now();
 
     if (msg_type == MessageType::SUBMIT_ORDER)
     {
@@ -119,9 +115,13 @@ MessageType ServerTCP::process_request(int i)
         construct_message<MessageType::REJECT>(response, RejectReason::INVALID_MESSAGE);
     }
 
+    auto t2 = std::chrono::steady_clock::now();
+
+    uint64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
+    tracker.insert_entry(enum_name(msg_type), ns);
+
     tcp_send(fd, response);
     buffer.reset();
-    return msg_type;
 }
 
 void ServerTCP::use_poll()
@@ -129,14 +129,12 @@ void ServerTCP::use_poll()
     pfds[0] = {sock_desc, POLLIN, 0};
     pfd_count = 1;
 
-    std::signal(SIGINT, &ServerTCP::signal_handler);
-
-    while (!should_exit)
+    while (!stop)
     {
         int events = poll(pfds, pfd_count, -1);
         if (events == -1)
         {
-            if (errno == EINTR)
+            if (errno == EINTR) // exit signal
                 continue;
             throw std::runtime_error("Poll failed with -1");
         }
@@ -183,12 +181,7 @@ void ServerTCP::use_poll()
                         buf.received += n;
                         if (buf.is_complete())
                         {
-                            struct timespec t_start, t_end;
-                            clock_gettime(CLOCK_MONOTONIC, &t_start);
-                            MessageType type = process_request(i);
-                            clock_gettime(CLOCK_MONOTONIC, &t_end);
-                            uint64_t ns = (t_end.tv_sec - t_start.tv_sec) * 1'000'000'000ULL + (t_end.tv_nsec - t_start.tv_nsec);
-                            tracker.record(type, ns);
+                            process_request(i);
                         }
                     }
                 }
@@ -201,6 +194,4 @@ void ServerTCP::use_poll()
             }
         }
     }
-
-    tracker.dump();
 }

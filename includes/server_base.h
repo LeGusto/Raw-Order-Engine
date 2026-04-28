@@ -18,6 +18,8 @@
 #include "order_book.h"
 #include "protocol.h"
 #include "serializer.h"
+#include "latency.h"
+#include <csignal>
 
 struct ClientBuffer
 {
@@ -52,6 +54,10 @@ protected:
     int pfd_count = 0;
     ClientBuffer client_buffers[BACKLOG + 1];
     OrderBook book;
+    LatencyTracker tracker{LOG_ENTRIES};
+
+    inline static volatile sig_atomic_t stop;
+    static void handle_stop(int) { stop = 1; }
 
     void setup_addrinfo();
 

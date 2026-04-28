@@ -64,6 +64,8 @@ void Server::bind_socket()
 
 Server::Server()
 {
+    Server::stop = 0;
+    std::signal(SIGINT, handle_stop);
     setup_addrinfo();
     get_socket();
     bind_socket();
@@ -149,4 +151,6 @@ Server::~Server()
     {
         close(pfds[i].fd);
     }
+
+    tracker.dump_entries();
 }

@@ -36,6 +36,8 @@ add_compile_options($<$<CONFIG:Release>:-O2>)
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/includes ${CMAKE_SOURCE_DIR}/src)
 
 find_package(Threads REQUIRED)
+find_package(TBB REQUIRED)
+
 
 add_executable(server
     src/server_main.cpp
@@ -44,9 +46,9 @@ add_executable(server
     src/server_udp.cpp
     src/serializer.cpp
     src/order_book.cpp
-    src/latency_tracker.cpp
 )
 target_compile_definitions(server PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+target_link_libraries(server PRIVATE TBB::tbb)
 
 add_executable(user
     src/user_spawner.cpp
