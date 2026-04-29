@@ -26,6 +26,7 @@ class LatencyTracker
 private:
     std::vector<Entry> entries;
     size_t n = 0;
+    std::unordered_map<std::string, std::vector<uint64_t>> buckets;
 
     long double avg()
     {
@@ -66,6 +67,14 @@ public:
         }
     }
 
+    void partition_entries()
+    {
+        for (auto &v : entries)
+        {
+            buckets[v.op_name].push_back(v.ns);
+        }
+    }
+
     void dump_entries()
     {
         sort(entries.begin(), entries.end(), [](const Entry &a, const Entry &b)
@@ -88,14 +97,6 @@ public:
                    "P99.99: {}\n",
                    avg(), min(), max(), pxx(50), pxx(95), pxx(99), pxx(99.99));
 
-        // for (auto &v : entries)
-        // {
-        //     out << v.op_name << " "
-        //     << v.ns << "\n";
-        //     if (!out)
-        //     {
-        //         throw std::runtime_error(std::format("Could not write to outpout: {}, {}", v.op_name, v.ns));
-        //     }
-        // }
+        for ()
     }
 };

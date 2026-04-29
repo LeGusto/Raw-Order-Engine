@@ -2,6 +2,19 @@
 #include "tcp_helpers.h"
 #include "chrono"
 #include "enum_name.h"
+#include <array>
+#include <string_view>
+
+namespace
+{
+    const std::array<std::string_view, 256> msg_type_name_cache = []
+    {
+        std::array<std::string_view, 256> a{};
+        for (int i = 0; i < 256; i++)
+            a[i] = enum_name(static_cast<MessageType>(i));
+        return a;
+    }();
+}
 
 void ServerTCP::listen_socket()
 {
@@ -118,7 +131,7 @@ void ServerTCP::process_request(int i)
     auto t2 = std::chrono::steady_clock::now();
 
     uint64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
-    tracker.insert_entry(enum_name(msg_type), ns);
+    tracker.insert_entry(msg_type_name_cache[static_cast<uint8_t>(msg_type)], ns);
 
     tcp_send(fd, response);
     buffer.reset();
