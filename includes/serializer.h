@@ -149,6 +149,7 @@ template <MessageType t, typename T>
 void construct_message(std::string &response, const T &payload_val)
 {
     std::string payload;
+    payload.reserve(sizeof(payload_val));
     pack(payload, payload_val);
 
     uint32_t payload_len = htonl(payload.size());

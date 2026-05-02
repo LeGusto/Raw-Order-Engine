@@ -134,6 +134,8 @@ std::vector<Order> OrderBook::get_orders(uint32_t customerID)
     if (customerIDMap.find(customerID) == customerIDMap.end())
         return rt;
 
+    rt.reserve(customerIDMap[customerID].size());
+
     auto it = customerIDMap[customerID].begin();
     while (it != customerIDMap[customerID].end())
     {

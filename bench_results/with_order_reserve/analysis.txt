@@ -1,0 +1,17 @@
+# Combined across 5 runs: run_1, run_2, run_3, run_4, run_5
+=== GLOBAL (n=6,254,050) ===
+  min=33ns  avg=1.4µs  max=2.64ms
+  p50=518ns  p95=1.6µs  p99=2.4µs  p99.9=8.4µs  p99.99=1.47ms
+
+=== CANCEL_ORDER (n=1,249,050) ===
+  min=33ns  avg=1.1µs  max=158.5µs
+  p50=1.0µs  p95=1.9µs  p99=2.7µs  p99.9=6.0µs  p99.99=17.6µs
+
+=== GET_ORDERS (n=5,000) ===
+  min=4.6µs  avg=843.2µs  max=2.64ms
+  p50=846.1µs  p95=1.64ms  p99=1.88ms  p99.9=2.22ms  p99.99=2.49ms
+
+=== SUBMIT_ORDER (n=5,000,000) ===
+  min=77ns  avg=583ns  max=856.2µs
+  p50=439ns  p95=1.4µs  p99=2.2µs  p99.9=4.4µs  p99.99=12.2µs
+

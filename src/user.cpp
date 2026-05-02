@@ -20,7 +20,8 @@ User::User() : user_id(user_count++) {};
 
 void User::log(std::string s)
 {
-    std::print("[user {}]: {}\n", user_id, s);
+    if constexpr (DEBUG)
+        std::print("[user {}]: {}\n", user_id, s);
 }
 
 void User::get_addrinfo()
@@ -181,6 +182,9 @@ void User::use_server()
             std::uniform_int_distribution<int> idx_dist(0, order_ids.size() - 1);
             cancel_order(order_ids[idx_dist(gen)]);
         }
+
+        if (i > 0 && i % 1000 == 0)
+            get_orders();
     }
 
     get_orders();
