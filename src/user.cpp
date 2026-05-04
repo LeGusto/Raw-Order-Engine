@@ -165,8 +165,7 @@ void User::use_server()
     get_socket();
     connect_socket();
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(0xDEADBEEF + user_id);
     std::uniform_int_distribution<uint32_t> price_dist(50, 200);
     std::uniform_int_distribution<uint32_t> qty_dist(1, 100);
     std::uniform_int_distribution<int> side_dist(0, 1);

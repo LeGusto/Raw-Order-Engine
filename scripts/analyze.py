@@ -25,8 +25,27 @@ def load_bucket(path: Path) -> "np.ndarray":
     return np.loadtxt(path, dtype=np.uint64, ndmin=1)
 
 
+SKIP_FILES = {"analysis.txt"}
+
+
 def buckets_in(run_dir: Path) -> dict[str, "np.ndarray"]:
-    return {f.stem: load_bucket(f) for f in sorted(run_dir.glob("*.txt"))}
+    out: dict[str, "np.ndarray"] = {}
+    for f in sorted(run_dir.glob("*.txt")):
+        if f.name in SKIP_FILES or f.name.startswith("compare_"):
+            continue
+        out[f.stem] = load_bucket(f)
+    return out
+
+
+def aggregate_buckets(path: Path) -> dict[str, "np.ndarray"]:
+    """Combine bucket samples across run dirs.
+    Accepts either a single run dir, or a parent dir containing run_*/."""
+    run_dirs = sorted(path.glob("run_*")) or [path]
+    combined: dict[str, list["np.ndarray"]] = {}
+    for d in run_dirs:
+        for name, s in buckets_in(d).items():
+            combined.setdefault(name, []).append(s)
+    return {k: np.concatenate(v) for k, v in combined.items()}
 
 
 def fmt_ns(v: float) -> str:
@@ -83,8 +102,8 @@ def cmd_compare(a_dir: Path, b_dir: Path) -> None:
         print("install scipy: pip install scipy", file=sys.stderr)
         sys.exit(1)
 
-    a_buckets = buckets_in(a_dir)
-    b_buckets = buckets_in(b_dir)
+    a_buckets = aggregate_buckets(a_dir)
+    b_buckets = aggregate_buckets(b_dir)
     keys = sorted(set(a_buckets) | set(b_buckets))
 
     print(f"# Compare: {a_dir.name}  vs  {b_dir.name}")
@@ -144,7 +163,7 @@ def main() -> None:
             cmd_summary(runs)
         sys.stdout = sys.__stdout__
 
-    print(f"wrote: {out_path}")
+    print(f"wrote: {out_path.resolve()}")
 
 
 if __name__ == "__main__":

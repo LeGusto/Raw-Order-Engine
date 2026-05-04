@@ -61,6 +61,7 @@ void ServerTCP::process_request(int i)
 
     size_t offset = 5; // skip header (4 length + 1 type)
     std::string response;
+    // response.reserve(64);
 
     auto t1 = std::chrono::steady_clock::now();
 

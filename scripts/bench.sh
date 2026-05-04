@@ -1,26 +1,65 @@
 #!/usr/bin/env bash
-# Run the workload N times under a config label.
+# Run the workload (warmup + measured) times under a config label.
 #
 # Usage:
-#   scripts/bench.sh <runs> <label>
+#   scripts/bench.sh [runs] <label>
 #
-# Each run produces a logs/run_<timestamp>/ directory containing one .txt
-# file per bucket with raw nanosecond samples. They get moved into
-# bench_results/<label>/run_<i>/.
+# Runs `WARMUP` extra iterations first and discards them. Then runs `runs`
+# more iterations and saves them to bench_results/<label>/run_<i>/.
 #
-# After running, analyze with:
-#   scripts/analyze.py bench_results/<label>
-#   scripts/analyze.py --compare bench_results/baseline bench_results/optimized
+# Warmup runs absorb cold-cache, allocator-warmup, and CPU-frequency-ramp
+# effects. They get thrown away.
 
 set -euo pipefail
 
-RUNS=${1:-5}
-LABEL=${2:-default}
+WARMUP=2
+DEFAULT_RUNS=10
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [runs] <label>
+
+Run the workload <runs> times (default $DEFAULT_RUNS) under <label>.
+Plus $WARMUP warmup runs that get discarded before measurement starts.
+
+Examples:
+    $(basename "$0") baseline             # ${DEFAULT_RUNS} runs + ${WARMUP} warmup, label=baseline
+    $(basename "$0") 20 optimized         # 20 runs + ${WARMUP} warmup, label=optimized
+EOF
+    exit "${1:-0}"
+}
+
+for arg in "$@"; do
+    [[ "$arg" == "-h" || "$arg" == "--help" ]] && usage 0
+done
+
+if [[ $# -eq 0 ]]; then
+    echo "error: missing <label>" >&2
+    usage 1
+elif [[ $# -eq 1 ]]; then
+    RUNS=$DEFAULT_RUNS
+    LABEL="$1"
+elif [[ $# -eq 2 ]]; then
+    RUNS="$1"
+    LABEL="$2"
+else
+    echo "error: too many arguments" >&2
+    usage 1
+fi
+
+if ! [[ "$RUNS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "error: <runs> must be a positive integer, got '$RUNS'" >&2
+    usage 1
+fi
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 OUT="bench_results/$LABEL"
+if [[ -d "$OUT" ]] && [[ -n "$(ls -A "$OUT" 2>/dev/null)" ]]; then
+    echo "error: $OUT already has data — pick a different label or remove it" >&2
+    exit 1
+fi
 mkdir -p "$OUT"
 
 if [[ ! -x bin/server ]] || [[ ! -x bin/user ]]; then
@@ -28,33 +67,50 @@ if [[ ! -x bin/server ]] || [[ ! -x bin/user ]]; then
     exit 1
 fi
 
-for i in $(seq 1 "$RUNS"); do
-    echo "=== run $i / $RUNS ($LABEL) ==="
+run_once() {
+    local label="$1"   # what to print
+    local keep="$2"    # destination dir, or empty to discard
 
-    rm -rf logs/run_*/  
+    echo "=== $label ==="
+
+    rm -rf logs/run_*/
 
     ./bin/server &
-    SERVER_PID=$!
+    local server_pid=$!
     sleep 0.3
 
     if ! ./bin/user; then
-        kill -INT "$SERVER_PID" 2>/dev/null || true
-        wait "$SERVER_PID" 2>/dev/null || true
-        echo "user failed on run $i" >&2
+        kill -INT "$server_pid" 2>/dev/null || true
+        wait "$server_pid" 2>/dev/null || true
+        echo "user failed during $label" >&2
         exit 1
     fi
 
-    kill -INT "$SERVER_PID"
-    wait "$SERVER_PID" 2>/dev/null || true
+    kill -INT "$server_pid"
+    wait "$server_pid" 2>/dev/null || true
 
-    LATEST=$(ls -td logs/run_* 2>/dev/null | head -1 || true)
-    if [[ -z "${LATEST}" ]]; then
-        echo "no run_* dir produced" >&2
+    local latest
+    latest=$(ls -td logs/run_* 2>/dev/null | head -1 || true)
+    if [[ -z "$latest" ]]; then
+        echo "no run_* dir produced during $label" >&2
         exit 1
     fi
-    mv "$LATEST" "$OUT/run_$i"
+
+    if [[ -n "$keep" ]]; then
+        mv "$latest" "$keep"
+    else
+        rm -rf "$latest"
+    fi
+}
+
+for w in $(seq 1 "$WARMUP"); do
+    run_once "warmup $w / $WARMUP ($LABEL)" ""
+done
+
+for i in $(seq 1 "$RUNS"); do
+    run_once "run $i / $RUNS ($LABEL)" "$OUT/run_$i"
 done
 
 echo
-echo "saved $RUNS runs to $OUT/"
+echo "saved $RUNS runs to $OUT/  (after $WARMUP discarded warmup runs)"
 echo "analyze: scripts/analyze.py $OUT"

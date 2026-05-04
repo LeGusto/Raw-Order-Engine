@@ -5,3 +5,5 @@ build/
 build-tsan/
 build*
 logs/
+bench_results/
+.venv/
