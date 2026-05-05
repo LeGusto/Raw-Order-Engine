@@ -105,4 +105,6 @@ public:
     std::optional<Order> cancel_order(uint32_t orderID);
 
     std::vector<Order> get_orders(uint32_t customerID);
+
+    std::string check_invariants() const;
 };

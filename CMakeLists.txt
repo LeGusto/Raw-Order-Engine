@@ -72,6 +72,12 @@ add_executable(test_serializer
 )
 add_test(NAME test_serializer COMMAND test_serializer)
 
+add_executable(test_stress
+    tests/test_stress.cpp
+    src/order_book.cpp
+)
+add_test(NAME test_stress COMMAND test_stress)
+
 add_custom_target(run_server
     COMMAND $<TARGET_FILE:server>
     DEPENDS server
