@@ -28,6 +28,8 @@ private:
     uint32_t user_id = 0;
     std::vector<uint32_t> order_ids;
 
+    std::pair<MessageType, std::string> recv_response();
+
 public:
     User();
 
