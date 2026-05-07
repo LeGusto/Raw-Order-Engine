@@ -133,7 +133,6 @@ void User::get_orders()
     if (msg_type == MessageType::ORDERS_LIST)
     {
         log(std::format("Received {}", buf.size()));
-        std::fflush(stdout);
 
         std::vector<Order> orders;
         size_t offset = 0;

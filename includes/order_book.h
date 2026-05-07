@@ -78,10 +78,10 @@ struct mapNavigation
 {
     std::list<Order>::iterator order_it;
     std::list<std::list<Order>::iterator>::iterator customer_it;
-    Side side;
-    uint32_t price;
 
-    mapNavigation(std::list<Order>::iterator _order_it, std::list<std::list<Order>::iterator>::iterator _customer_it, Order &order) : order_it(_order_it), customer_it(_customer_it), side(order.side), price(order.price) {};
+    mapNavigation(std::list<Order>::iterator _order_it,
+                  std::list<std::list<Order>::iterator>::iterator _customer_it)
+        : order_it(_order_it), customer_it(_customer_it) {}
 };
 
 class OrderBook

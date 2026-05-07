@@ -92,7 +92,7 @@ std::variant<std::vector<Match>, Order> OrderBook::process_order(Side side, uint
     std::list<std::list<Order>::iterator>::iterator customer_it = customerIDMap[customerID].end();
     advance(customer_it, -1);
 
-    mapNavigation entry = {order_it, customer_it, order};
+    mapNavigation entry{order_it, customer_it};
     orderIDMap.insert({order.id, entry});
 
     std::vector<Match> matches = match_orders();
@@ -111,20 +111,22 @@ std::optional<Order> OrderBook::cancel_order(uint32_t orderID)
     mapNavigation item = found->second;
 
     Order rt = *item.order_it;
+    Side side = rt.side;
+    uint32_t price = rt.price;
 
     remove_order_refs(orderID);
 
-    if (item.side == Side::BID)
+    if (side == Side::BID)
     {
-        bidMap[item.price].erase(item.order_it);
-        if (bidMap[item.price].empty())
-            bidMap.erase(item.price);
+        bidMap[price].erase(item.order_it);
+        if (bidMap[price].empty())
+            bidMap.erase(price);
     }
-    else if (item.side == Side::ASK)
+    else if (side == Side::ASK)
     {
-        askMap[item.price].erase(item.order_it);
-        if (askMap[item.price].empty())
-            askMap.erase(item.price);
+        askMap[price].erase(item.order_it);
+        if (askMap[price].empty())
+            askMap.erase(price);
     }
 
     return rt;
@@ -195,15 +197,11 @@ std::string OrderBook::check_invariants() const
         return std::format("orderIDMap.size()={} but books contain {} orders",
                            orderIDMap.size(), orders_in_books);
 
-    // each orderIDMap entry's iterator points to a real order with matching info
+    // each orderIDMap entry's iterator points to a real order with matching id
     for (const auto &[id, nav] : orderIDMap)
     {
         if (nav.order_it->id != id)
             return std::format("orderIDMap[{}] iterator points to order id={}", id, nav.order_it->id);
-        if (nav.order_it->price != nav.price)
-            return std::format("orderIDMap[{}] price mismatch: {} vs {}", id, nav.order_it->price, nav.price);
-        if (nav.order_it->side != nav.side)
-            return std::format("orderIDMap[{}] side mismatch", id);
     }
 
     // customerIDMap: no empty entries, total iterators == orderIDMap.size,
