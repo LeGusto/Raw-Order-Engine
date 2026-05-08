@@ -23,9 +23,11 @@ std::optional<Order> OrderBook::lowest_ask()
 void OrderBook::remove_order_refs(uint32_t orderID)
 {
     auto &nav = orderIDMap.at(orderID);
-    customerIDMap[nav.order_it->customerID].erase(nav.customer_it);
-    if (customerIDMap[nav.order_it->customerID].empty())
-        customerIDMap.erase(nav.order_it->customerID);
+    uint32_t cid = nav.order_it->customerID;
+    auto it = customerIDMap[cid];
+    it.erase(nav.customer_it);
+    if (it.empty())
+        customerIDMap.erase(cid);
     orderIDMap.erase(orderID);
 }
 
