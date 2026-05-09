@@ -24,7 +24,7 @@ void OrderBook::remove_order_refs(uint32_t orderID)
 {
     auto &nav = orderIDMap.at(orderID);
     uint32_t cid = nav.order_it->customerID;
-    auto it = customerIDMap[cid];
+    auto &it = customerIDMap[cid];
     it.erase(nav.customer_it);
     if (it.empty())
         customerIDMap.erase(cid);
