@@ -76,26 +76,16 @@ std::vector<Match> OrderBook::match_orders()
 std::variant<std::vector<Match>, Order> OrderBook::process_order(Side side, uint32_t quantity, uint32_t price, uint32_t customerID)
 {
     Order order{side, quantity, price, customerID};
-    std::list<Order>::iterator order_it;
-    if (side == Side::ASK)
-    {
-        askMap[order.price].push_back(order);
-        order_it = askMap[order.price].end();
-    }
-    else if (side == Side::BID)
-    {
-        bidMap[order.price].push_back(order);
-        order_it = bidMap[order.price].end();
-    }
 
-    advance(order_it, -1);
-    customerIDMap[customerID].push_back(order_it);
+    auto &level = (side == Side::ASK) ? askMap[order.price] : bidMap[order.price];
+    level.push_back(order);
+    auto order_it = std::prev(level.end());
 
-    std::list<std::list<Order>::iterator>::iterator customer_it = customerIDMap[customerID].end();
-    advance(customer_it, -1);
+    auto &cust_list = customerIDMap[customerID];
+    cust_list.push_back(order_it);
+    auto customer_it = std::prev(cust_list.end());
 
-    mapNavigation entry{order_it, customer_it};
-    orderIDMap.insert({order.id, entry});
+    orderIDMap.insert({order.id, mapNavigation{order_it, customer_it}});
 
     std::vector<Match> matches = match_orders();
     if (!matches.empty())
