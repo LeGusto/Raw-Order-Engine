@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <exception>
 #include <print>
 #include <random>
 #include <vector>
@@ -18,12 +19,7 @@ namespace
 
     void check(const OrderBook &book, int iter, const char *op)
     {
-        auto err = book.check_invariants();
-        if (!err.empty())
-        {
-            std::println(stderr, "FAIL at iter {} after {}: {}", iter, op, err);
-            std::exit(1);
-        }
+        book.check_invariants();
     }
 }
 
