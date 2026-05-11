@@ -1,5 +1,7 @@
 #include "server_udp.h"
 
+#include <stdexcept>
+
 void ServerUDP::start_server()
 {
     char buf[2];

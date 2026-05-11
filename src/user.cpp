@@ -1,19 +1,15 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <string>
-#include <unistd.h>
-#include <cstddef>
-#include "config.h"
-#include <cstring>
-#include <stdexcept>
-#include <iostream>
-#include <vector>
-#include <print>
-#include <thread>
-#include <atomic>
 #include <user.h>
+
+#include <cstring>
+#include <format>
+#include <netdb.h>
+#include <print>
 #include <random>
+#include <stdexcept>
+#include <unistd.h>
+
+#include "config.h"
+#include "serializer.h"
 #include "tcp_helpers.h"
 
 User::User() : user_id(user_count++) {};

@@ -1,22 +1,12 @@
 #pragma once
 
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
-#include <string>
-#include <unistd.h>
-#include <cstddef>
-#include "config.h"
-#include <cstring>
-#include <stdexcept>
-#include <iostream>
-#include <vector>
-#include <print>
-#include <thread>
 #include <atomic>
-#include <order_book.h>
-#include <protocol.h>
-#include "serializer.h"
+#include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
+#include "protocol.h"
 
 class User
 {

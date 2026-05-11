@@ -1,5 +1,10 @@
 #include "server_base.h"
 
+#include <fcntl.h>
+#include <stdexcept>
+#include <string>
+#include <unistd.h>
+
 void Server::setup_addrinfo()
 {
 

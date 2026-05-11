@@ -1,11 +1,12 @@
 #pragma once
 
 #include <cstdint>
-#include <algorithm>
-#include <iostream>
-#include <bit>
-#include <arpa/inet.h>
 #include <cstring>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <type_traits>
+#include <arpa/inet.h>
 #include "protocol.h"
 
 uint64_t pack754(long double f, uint32_t bits, uint32_t exp_bits);

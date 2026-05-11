@@ -1,25 +1,16 @@
 #pragma once
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <string>
-#include <cstring>
-#include <iostream>
-#include <print>
-#include <cstddef>
 #include <arpa/inet.h>
-#include <unistd.h>
-#include <vector>
-#include <fcntl.h>
-#include "config.h"
+#include <csignal>
+#include <cstring>
+#include <netdb.h>
 #include <poll.h>
-#include <array>
+#include <print>
+#include <sys/socket.h>
+#include "config.h"
+#include "latency.h"
 #include "order_book.h"
 #include "protocol.h"
-#include "serializer.h"
-#include "latency.h"
-#include <csignal>
 
 struct ClientBuffer
 {
