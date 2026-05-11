@@ -106,5 +106,5 @@ public:
 
     std::vector<Order> get_orders(uint32_t customerID);
 
-    std::string check_invariants() const;
+    void check_invariants() const;
 };
