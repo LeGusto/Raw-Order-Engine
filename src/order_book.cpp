@@ -164,6 +164,8 @@ void OrderBook::check_invariants() const
                 throw std::runtime_error(std::format("ask order id={} has price {} but is at level {}", o.id, o.price, price));
             if (o.side != Side::ASK)
                 throw std::runtime_error(std::format("ask order id={} has side != ASK", o.id));
+            if (o.quantity == 0)
+                throw std::runtime_error(std::format("ask order id={} has zero quantity resting in book", o.id));
             orders_in_books++;
         }
     }
@@ -178,6 +180,8 @@ void OrderBook::check_invariants() const
                 throw std::runtime_error(std::format("bid order id={} has price {} but is at level {}", o.id, o.price, price));
             if (o.side != Side::BID)
                 throw std::runtime_error(std::format("bid order id={} has side != BID", o.id));
+            if (o.quantity == 0)
+                throw std::runtime_error(std::format("bid order id={} has zero quantity resting in book", o.id));
             orders_in_books++;
         }
     }
@@ -190,6 +194,8 @@ void OrderBook::check_invariants() const
     {
         if (nav.order_it->id != id)
             throw std::runtime_error(std::format("orderIDMap[{}] iterator points to order id={}", id, nav.order_it->id));
+        if (*(nav.customer_it) != nav.order_it)
+            throw std::runtime_error(std::format("orderIDMap[{}] customer_it does not round-trip to order_it", id));
     }
 
     size_t orders_in_customers = 0;
