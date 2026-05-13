@@ -128,13 +128,17 @@ std::optional<Order> OrderBook::cancel_order(uint32_t orderID)
 std::vector<Order> OrderBook::get_orders(uint32_t customerID)
 {
     std::vector<Order> rt;
-    if (customerIDMap.find(customerID) == customerIDMap.end())
+
+    auto loc = customerIDMap.find(customerID);
+    if (loc == customerIDMap.end())
         return rt;
 
-    rt.reserve(customerIDMap[customerID].size());
+    auto &cust_list = loc->second;
 
-    auto it = customerIDMap[customerID].begin();
-    while (it != customerIDMap[customerID].end())
+    rt.reserve(cust_list.size());
+
+    auto it = cust_list.begin();
+    while (it != cust_list.end())
     {
         rt.push_back(*(*it));
         advance(it, 1);
