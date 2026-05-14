@@ -109,18 +109,21 @@ std::optional<Order> OrderBook::cancel_order(uint32_t orderID)
 
     remove_order_refs(orderID);
 
-    if (side == Side::BID)
+    if (rt.side == Side::ASK)
     {
-        bidMap[price].erase(item.order_it);
-        if (bidMap[price].empty())
-            bidMap.erase(price);
+        auto level = askMap.find(rt.price);
+        level->second.erase(item.order_it);
+        if (level->second.empty())
+            askMap.erase(level);
     }
-    else if (side == Side::ASK)
+    else
     {
-        askMap[price].erase(item.order_it);
-        if (askMap[price].empty())
-            askMap.erase(price);
+        auto level = bidMap.find(rt.price);
+        level->second.erase(item.order_it);
+        if (level->second.empty())
+            bidMap.erase(level);
     }
+
 
     return rt;
 }
