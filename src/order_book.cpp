@@ -109,18 +109,21 @@ std::optional<Order> OrderBook::cancel_order(uint32_t orderID)
 
     remove_order_refs(orderID);
 
-    if (side == Side::BID)
+    if (rt.side == Side::ASK)
     {
-        bidMap[price].erase(item.order_it);
-        if (bidMap[price].empty())
-            bidMap.erase(price);
+        auto level = askMap.find(rt.price);
+        level->second.erase(item.order_it);
+        if (level->second.empty())
+            askMap.erase(level);
     }
-    else if (side == Side::ASK)
+    else
     {
-        askMap[price].erase(item.order_it);
-        if (askMap[price].empty())
-            askMap.erase(price);
+        auto level = bidMap.find(rt.price);
+        level->second.erase(item.order_it);
+        if (level->second.empty())
+            bidMap.erase(level);
     }
+
 
     return rt;
 }
@@ -128,13 +131,17 @@ std::optional<Order> OrderBook::cancel_order(uint32_t orderID)
 std::vector<Order> OrderBook::get_orders(uint32_t customerID)
 {
     std::vector<Order> rt;
-    if (customerIDMap.find(customerID) == customerIDMap.end())
+
+    auto loc = customerIDMap.find(customerID);
+    if (loc == customerIDMap.end())
         return rt;
 
-    rt.reserve(customerIDMap[customerID].size());
+    auto &cust_list = loc->second;
 
-    auto it = customerIDMap[customerID].begin();
-    while (it != customerIDMap[customerID].end())
+    rt.reserve(cust_list.size());
+
+    auto it = cust_list.begin();
+    while (it != cust_list.end())
     {
         rt.push_back(*(*it));
         advance(it, 1);
