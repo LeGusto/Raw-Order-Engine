@@ -75,14 +75,14 @@ Binary framing over TCP. All multi-byte integers are network byte order.
 
 | Type | Name | Direction | Payload |
 |------|------|-----------|---------|
-| `0x01` | `SUBMIT_ORDER` | C → S | customer\_id(4) + side(1) + price(4) + qty(4) |
-| `0x02` | `CANCEL_ORDER` | C → S | order\_id(4) |
-| `0x03` | `ORDER_ACK` | S → C | order\_id(4) |
-| `0x04` | `CANCEL_ACK` | S → C | order\_id(4) |
-| `0x05` | `MATCH` | S → C | ask\_order(17) + bid\_order(17) + qty(4) |
-| `0x06` | `REJECT` | S → C | reason\_code(1) |
-| `0x07` | `GET_ORDERS` | C → S | customer\_id(4) |
-| `0x08` | `ORDERS_LIST` | S → C | count(4) + orders(17 × n) |
+| `0x01` | `SUBMIT_ORDER` | C -> S | customer\_id(4) + side(1) + price(4) + qty(4) |
+| `0x02` | `CANCEL_ORDER` | C -> S | order\_id(4) |
+| `0x03` | `ORDER_ACK` | S -> C | order\_id(4) |
+| `0x04` | `CANCEL_ACK` | S -> C | order\_id(4) |
+| `0x05` | `MATCH` | S -> C | ask\_order(17) + bid\_order(17) + qty(4) |
+| `0x06` | `REJECT` | S -> C | reason\_code(1) |
+| `0x07` | `GET_ORDERS` | C -> S | customer\_id(4) |
+| `0x08` | `ORDERS_LIST` | S -> C | count(4) + orders(17 × n) |
 
 Full protocol spec: [docs/PROTOCOL.md](docs/PROTOCOL.md)
 
