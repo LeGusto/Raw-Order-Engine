@@ -4,7 +4,7 @@ An order book server built from raw TCP sockets in C++23, written to learn syste
 
 ## What It Does
 
-Clients connect over TCP and submit buy or sell orders. The server matches them when the prices cross — a sell price at or below a buy price — and notifies both sides. Unmatched orders sit in the book until they're filled or cancelled.
+Clients connect over TCP and submit buy or sell orders. The server matches them when the prices cross - a sell price at or below a buy price - and notifies both sides. Unmatched orders sit in the book until they're filled or cancelled.
 
 ## Architecture
 
@@ -38,16 +38,16 @@ The book is split into two sides:
 
 | Side | Container | Order |
 |------|-----------|-------|
-| ASK (sell) | `std::map<price, list<Order>>` | ascending — cheapest ask first |
-| BID (buy) | `std::map<price, list<Order>, std::greater<>>` | descending — highest bid first |
+| ASK (sell) | `std::map<price, list<Order>>` | ascending - cheapest ask first |
+| BID (buy) | `std::map<price, list<Order>, std::greater<>>` | descending - highest bid first |
 
-Fast cancellation is achieved via `orderIDMap`, which stores iterators directly into both maps, giving O(log n) lookup and O(1) removal.
+Fast cancellation is achieved via `orderIDMap`, which stores iterators directly into both maps.
 
-Matching fires whenever `best_ask_price <= best_bid_price`. Partial fills are supported — the remainder stays resting in the book.
+Matching fires whenever `best_ask_price <= best_bid_price`. Partial fills are supported - the remainder stays resting in the book.
 
 ### Network Layer
 
-The server uses a single-threaded `poll()` loop over all file descriptors — no blocking calls, no per-client threads. Each client gets a `ClientBuffer` that accumulates bytes until a full framed message arrives, then dispatches it to the order book.
+The server uses a single-threaded `poll()` loop over all file descriptors - no blocking calls, no per-client threads. Each client gets a `ClientBuffer` that accumulates bytes until a full framed message arrives, then dispatches it to the order book.
 
 ### Serialization
 
@@ -109,10 +109,10 @@ Binaries land in `bin/`.
 ## Running
 
 ```bash
-# Terminal 1 — start the server 
+# Terminal 1 - start the server 
 ./bin/server
 
-# Terminal 2 — run stress test 
+# Terminal 2 - run stress test 
 ./bin/user
 ```
 
