@@ -30,6 +30,11 @@ tests/
 ├── test_order_book.cpp   Matching logic unit tests
 ├── test_serializer.cpp   Pack/unpack round-trip tests
 └── test_stress.cpp       Randomized stress test with invariant checks
+
+scripts/
+├── bench.sh              Run the workload N times under a label
+├── analyze.py            Summarize latency samples into percentiles
+└── menu.sh               Interactive driver for the two above
 ```
 
 ### Order Book
@@ -90,6 +95,8 @@ Full protocol spec: [docs/PROTOCOL.md](docs/PROTOCOL.md)
 
 **Dependencies:** CMake >= 3.20, a C++23 compiler, Intel TBB, pthreads.
 
+The benchmark analysis script additionally needs Python >= 3.9 with numpy (`pip install numpy`).
+
 ```bash
 # Debug build 
 cmake -B build -DCMAKE_BUILD_TYPE=Debug
@@ -141,14 +148,28 @@ scripts/bench.sh 20 <label>
 Analyze the results:
 
 ```bash
-# Stats for a single label
+# Accepts a label dir (all its run_* dirs combined) or a single run_* dir
 scripts/analyze.py bench_results/<label>
-
-# Compare two labels
-scripts/analyze.py --compare bench_results/<label_a> bench_results/<label_b>
 ```
 
-Results are saved to `bench_results/` and latency logs to `logs/`.
+This writes `analysis.txt` next to the samples. It reports a global aggregate
+followed by one section per operation, each in the form:
+
+```
+=== <operation> (n=<sample count>) ===
+  min=…  avg=…  max=…
+  p50=…  p95=…  p99=…  p99.9=…  p99.99=…
+```
+
+Or drive both scripts interactively, which prompts for a label and run count and
+lists existing results to pick from:
+
+```bash
+scripts/menu.sh
+```
+
+Results are saved to `bench_results/` and latency logs to `logs/`. Both are
+gitignored.
 
 ## Configuration
 
