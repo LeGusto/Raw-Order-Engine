@@ -2,7 +2,7 @@
 # Interactive driver for bench.sh and analyze.py.
 #
 # Usage: scripts/menu.sh
-# Pick "Run new benchmark" or "Compare two configs", get prompted for what's needed.
+# Pick "Run new benchmark" or "Summarize one config", get prompted for what's needed.
 
 set -euo pipefail
 
@@ -63,19 +63,6 @@ run_new() {
     "$REPO_ROOT/scripts/bench.sh" "$runs" "$label"
 }
 
-run_compare() {
-    local a b
-    pick_config "Pick CONFIG A:" a
-    pick_config "Pick CONFIG B:" b
-
-    if [[ "$a" == "$b" ]]; then
-        echo "you picked the same config twice — pick two different ones" >&2
-        exit 1
-    fi
-
-    python "$REPO_ROOT/scripts/analyze.py" --compare "$a" "$b"
-}
-
 run_summary() {
     local d
     pick_config "Pick a config to summarize:" d
@@ -83,12 +70,11 @@ run_summary() {
 }
 
 echo "What would you like to do?"
-select main in "Run new benchmark" "Compare two configs" "Summarize one config" "Quit"; do
+select main in "Run new benchmark" "Summarize one config" "Quit"; do
     case "$REPLY" in
         1) run_new; break ;;
-        2) run_compare; break ;;
-        3) run_summary; break ;;
-        4) exit 0 ;;
+        2) run_summary; break ;;
+        3) exit 0 ;;
         *) echo "invalid choice — pick a number from the list" ;;
     esac
 done
